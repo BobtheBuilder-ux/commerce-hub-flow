@@ -46,15 +46,17 @@ const BreadcrumbItem = React.forwardRef<
 BreadcrumbItem.displayName = "BreadcrumbItem";
 
 const BreadcrumbLink = React.forwardRef<
-  HTMLAnchorElement,
-  React.ComponentPropsWithoutRef<"a"> & {
+  HTMLAnchorElement | HTMLSpanElement,
+  Omit<React.ComponentPropsWithoutRef<"a">, "ref"> & {
     href?: string;
     asChild?: boolean;
   }
->(({ asChild, href, className, ...props }, ref) => {
+>(({ asChild, href, className, children, ...props }, ref) => {
   if (asChild) {
     return (
-      <li ref={ref} className={cn("inline-flex items-center", className)} {...props} />
+      <span ref={ref as React.ForwardedRef<HTMLSpanElement>} className={cn("inline-flex items-center", className)} {...props}>
+        {children}
+      </span>
     );
   }
 
@@ -63,12 +65,15 @@ const BreadcrumbLink = React.forwardRef<
       {href ? (
         <Link
           to={href}
-          ref={ref}
           className={cn("hover:text-foreground transition-colors", className)}
           {...props}
-        />
+        >
+          {children}
+        </Link>
       ) : (
-        <span ref={ref} className={cn(className)} {...props} />
+        <span className={cn(className)} {...props}>
+          {children}
+        </span>
       )}
       <ChevronRight className="h-4 w-4 mx-1" />
     </>

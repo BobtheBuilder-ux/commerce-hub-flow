@@ -15,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Google } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 
 // Schema for registration form
 const registerSchema = z.object({
@@ -160,7 +160,7 @@ const RegisterForm = () => {
         onClick={handleGoogleSignIn} 
         disabled={isSubmitting}
       >
-        <Google className="mr-2 h-4 w-4" />
+        <LogIn className="mr-2 h-4 w-4" />
         Sign up with Google
       </Button>
     </div>

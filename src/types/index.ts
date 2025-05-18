@@ -47,6 +47,7 @@ export interface Product {
   inventory: number;
   featured: boolean;
   averageRating?: number;
+  reviews: ProductReview[];
   createdAt: number;
   updatedAt: number;
 }

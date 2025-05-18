@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -17,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { toast } from '@/components/ui/sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Google } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import { isSignInWithEmailLink } from '@/lib/firebase';
 
 // Schema for email/password login
@@ -41,21 +40,6 @@ const LoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('email');
   const navigate = useNavigate();
-
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
-
-  const passwordlessForm = useForm<PasswordlessFormValues>({
-    resolver: zodResolver(passwordlessSchema),
-    defaultValues: {
-      email: '',
-    },
-  });
 
   // Check for email sign-in link
   useEffect(() => {
@@ -92,7 +76,7 @@ const LoginForm = () => {
       navigate('/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
-      // Form errors are handled by react-hook-form
+      toast.error(error.message || "Failed to sign in");
     } finally {
       setIsSubmitting(false);
     }
@@ -106,6 +90,7 @@ const LoginForm = () => {
       passwordlessForm.reset();
     } catch (error: any) {
       console.error('Passwordless login error:', error);
+      toast.error(error.message || "Failed to send sign-in link");
     } finally {
       setIsSubmitting(false);
     }
@@ -118,7 +103,7 @@ const LoginForm = () => {
       navigate('/dashboard');
     } catch (error: any) {
       console.error('Google sign-in error:', error);
-      toast.error('Failed to sign in with Google');
+      toast.error(error.message || "Failed to sign in with Google");
     } finally {
       setIsSubmitting(false);
     }
@@ -215,7 +200,7 @@ const LoginForm = () => {
         onClick={handleGoogleSignIn} 
         disabled={isSubmitting}
       >
-        <Google className="mr-2 h-4 w-4" />
+        <LogIn className="mr-2 h-4 w-4" />
         Sign in with Google
       </Button>
     </div>
