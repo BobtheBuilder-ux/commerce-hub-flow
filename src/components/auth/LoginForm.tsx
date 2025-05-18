@@ -67,7 +67,8 @@ const LoginForm = () => {
         if (email) {
           setIsSubmitting(true);
           try {
-            await completePasswordlessSignIn(email);
+            // Fixed: Pass window.location.href as the second argument
+            await completePasswordlessSignIn(email, window.location.href);
             navigate('/dashboard');
           } catch (error) {
             console.error('Error completing sign-in', error);

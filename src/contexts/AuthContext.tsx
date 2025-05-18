@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   createUserWithEmailAndPassword,
@@ -28,7 +27,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   sendPasswordlessSignIn: (email: string) => Promise<void>;
-  completePasswordlessSignIn: (email: string) => Promise<void>;
+  completePasswordlessSignIn: (email: string, linkUrl: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -180,10 +179,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Complete the passwordless sign-in process
-  const completePasswordlessSignIn = async (email: string) => {
+  const completePasswordlessSignIn = async (email: string, linkUrl: string) => {
     try {
-      if (isSignInWithEmailLink(auth, window.location.href)) {
-        const result = await signInWithEmailLink(auth, email, window.location.href);
+      if (isSignInWithEmailLink(auth, linkUrl)) {
+        const result = await signInWithEmailLink(auth, email, linkUrl);
         const user = result.user;
         
         // Remove email from storage
