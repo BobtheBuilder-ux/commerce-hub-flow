@@ -11,7 +11,14 @@ import { CartProvider } from "./contexts/CartContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import AdminLogin from "./pages/AdminLogin";
+import AdminRegister from "./pages/AdminRegister";
 import Dashboard from "./pages/Dashboard";
+import Orders from "./pages/dashboard/Orders";
+import Wishlist from "./pages/dashboard/Wishlist";
+import Addresses from "./pages/dashboard/Addresses";
+import PaymentMethods from "./pages/dashboard/PaymentMethods";
+import AccountSettings from "./pages/dashboard/AccountSettings";
 import AdminDashboard from "./pages/AdminDashboard";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
@@ -66,6 +73,8 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/register" element={<AdminRegister />} />
               <Route path="/products" element={<Products />} />
               <Route path="/products/:productId" element={<ProductDetails />} />
               <Route path="/categories" element={<Categories />} />
@@ -74,7 +83,11 @@ const App = () => (
               
               {/* Protected customer routes */}
               <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-              <Route path="/dashboard/*" element={<RequireAuth><Dashboard /></RequireAuth>} />
+              <Route path="/dashboard/orders" element={<RequireAuth><Orders /></RequireAuth>} />
+              <Route path="/dashboard/wishlist" element={<RequireAuth><Wishlist /></RequireAuth>} />
+              <Route path="/dashboard/addresses" element={<RequireAuth><Addresses /></RequireAuth>} />
+              <Route path="/dashboard/payment-methods" element={<RequireAuth><PaymentMethods /></RequireAuth>} />
+              <Route path="/dashboard/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
               
               {/* Protected admin routes */}
               <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
