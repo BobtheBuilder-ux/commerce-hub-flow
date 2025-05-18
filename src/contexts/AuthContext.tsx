@@ -7,6 +7,12 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailLink,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  getAuth,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -20,6 +26,9 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  sendPasswordlessSignIn: (email: string) => Promise<void>;
+  completePasswordlessSignIn: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -35,6 +44,12 @@ export const useAuth = () => {
 interface AuthProviderProps {
   children: ReactNode;
 }
+
+// For passwordless auth
+const actionCodeSettings = {
+  url: window.location.origin + '/login',
+  handleCodeInApp: true,
+};
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -116,13 +131,100 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Google Sign-In Method
+  const signInWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      // Check if user already exists in Firestore
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (!userDoc.exists()) {
+        // Create new user document
+        const userData: User = {
+          uid: user.uid,
+          email: user.email || '',
+          displayName: user.displayName || 'Google User',
+          role: 'customer',
+          createdAt: Date.now(),
+        };
+        
+        await setDoc(userDocRef, userData);
+      }
+      
+      toast.success("Signed in with Google successfully!");
+    } catch (error: any) {
+      console.error('Error signing in with Google:', error);
+      toast.error(error.message || "Failed to sign in with Google");
+      throw error;
+    }
+  };
+
+  // Passwordless Sign-In (Magic Link)
+  const sendPasswordlessSignIn = async (email: string) => {
+    try {
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      
+      // Store email in localStorage to use when completing sign in
+      window.localStorage.setItem('emailForSignIn', email);
+      
+      toast.success(`Sign-in link sent to ${email}. Please check your email.`);
+    } catch (error: any) {
+      console.error('Error sending passwordless sign-in link:', error);
+      toast.error(error.message || "Failed to send sign-in link");
+      throw error;
+    }
+  };
+
+  // Complete the passwordless sign-in process
+  const completePasswordlessSignIn = async (email: string) => {
+    try {
+      if (isSignInWithEmailLink(auth, window.location.href)) {
+        const result = await signInWithEmailLink(auth, email, window.location.href);
+        const user = result.user;
+        
+        // Remove email from storage
+        window.localStorage.removeItem('emailForSignIn');
+        
+        // Check if user already exists in Firestore
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (!userDoc.exists()) {
+          // Create new user document
+          const userData: User = {
+            uid: user.uid,
+            email: user.email || '',
+            displayName: email.split('@')[0], // Simple display name from email
+            role: 'customer',
+            createdAt: Date.now(),
+          };
+          
+          await setDoc(userDocRef, userData);
+        }
+        
+        toast.success("Signed in successfully!");
+      }
+    } catch (error: any) {
+      console.error('Error completing passwordless sign-in:', error);
+      toast.error(error.message || "Failed to complete sign-in");
+      throw error;
+    }
+  };
+
   const value = {
     currentUser,
     userData,
     loading,
     signUp,
     signIn,
-    signOut
+    signOut,
+    signInWithGoogle,
+    sendPasswordlessSignIn,
+    completePasswordlessSignIn
   };
 
   return (

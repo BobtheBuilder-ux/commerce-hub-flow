@@ -13,6 +13,11 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import Products from "./pages/Products";
+import ProductDetails from "./pages/ProductDetails";
+import Categories from "./pages/Categories";
+import Category from "./pages/Category";
+import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 
 // Auth required route component
@@ -61,6 +66,11 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:productId" element={<ProductDetails />} />
+              <Route path="/categories" element={<Categories />} />
+              <Route path="/categories/:categoryId" element={<Category />} />
+              <Route path="/cart" element={<Cart />} />
               
               {/* Protected customer routes */}
               <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
