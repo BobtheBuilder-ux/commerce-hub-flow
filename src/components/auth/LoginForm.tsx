@@ -61,14 +61,16 @@ const LoginForm = () => {
   // Check for email sign-in link
   useEffect(() => {
     const checkEmailLink = async () => {
-      if (isSignInWithEmailLink(window.location.href)) {
+      const currentUrl = window.location.href;
+      
+      if (isSignInWithEmailLink(currentUrl)) {
         // Get the email from localStorage that was used for sign-in link
         const email = window.localStorage.getItem('emailForSignIn');
         if (email) {
           setIsSubmitting(true);
           try {
-            // Fixed: Pass window.location.href as the second argument
-            await completePasswordlessSignIn(email, window.location.href);
+            // Pass both required arguments: email and the current URL
+            await completePasswordlessSignIn(email, currentUrl);
             navigate('/dashboard');
           } catch (error) {
             console.error('Error completing sign-in', error);
