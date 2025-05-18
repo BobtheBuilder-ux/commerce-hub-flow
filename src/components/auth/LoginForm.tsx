@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -40,6 +41,22 @@ const LoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('email');
   const navigate = useNavigate();
+  
+  // Initialize forms
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const passwordlessForm = useForm<PasswordlessFormValues>({
+    resolver: zodResolver(passwordlessSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
 
   // Check for email sign-in link
   useEffect(() => {

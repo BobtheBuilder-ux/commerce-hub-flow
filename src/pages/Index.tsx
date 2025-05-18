@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+
 const Index = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
@@ -49,6 +51,7 @@ const Index = () => {
     };
     fetchProducts();
   }, []);
+
   return <div className="flex flex-col min-h-screen">
       <Navbar />
       
@@ -160,6 +163,7 @@ const sampleProducts: Product[] = [{
   inventory: 23,
   featured: true,
   averageRating: 4.5,
+  reviews: [],
   createdAt: Date.now() - 1000000,
   updatedAt: Date.now() - 500000
 }, {
@@ -172,6 +176,7 @@ const sampleProducts: Product[] = [{
   inventory: 15,
   featured: true,
   averageRating: 4.2,
+  reviews: [],
   createdAt: Date.now() - 2000000,
   updatedAt: Date.now() - 1000000
 }, {
@@ -185,6 +190,7 @@ const sampleProducts: Product[] = [{
   inventory: 50,
   featured: false,
   averageRating: 4.0,
+  reviews: [],
   createdAt: Date.now() - 3000000,
   updatedAt: Date.now() - 1500000
 }, {
@@ -197,6 +203,7 @@ const sampleProducts: Product[] = [{
   inventory: 35,
   featured: true,
   averageRating: 4.8,
+  reviews: [],
   createdAt: Date.now() - 4000000,
   updatedAt: Date.now() - 2000000
 }, {
@@ -209,6 +216,7 @@ const sampleProducts: Product[] = [{
   inventory: 20,
   featured: false,
   averageRating: 4.3,
+  reviews: [],
   createdAt: Date.now() - 5000000,
   updatedAt: Date.now() - 3000000
 }, {
@@ -222,6 +230,7 @@ const sampleProducts: Product[] = [{
   inventory: 12,
   featured: true,
   averageRating: 4.1,
+  reviews: [],
   createdAt: Date.now() - 6000000,
   updatedAt: Date.now() - 3500000
 }, {
@@ -234,6 +243,7 @@ const sampleProducts: Product[] = [{
   inventory: 18,
   featured: false,
   averageRating: 4.7,
+  reviews: [],
   createdAt: Date.now() - 7000000,
   updatedAt: Date.now() - 4000000
 }, {
@@ -247,9 +257,11 @@ const sampleProducts: Product[] = [{
   inventory: 40,
   featured: false,
   averageRating: 4.0,
+  reviews: [],
   createdAt: Date.now() - 8000000,
   updatedAt: Date.now() - 4500000
 }];
+
 const categories = [{
   id: 'electronics',
   name: 'Electronics',
@@ -267,4 +279,5 @@ const categories = [{
   name: 'Fitness',
   image: '/placeholder.svg'
 }];
+
 export default Index;

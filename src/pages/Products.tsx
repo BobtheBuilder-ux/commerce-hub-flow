@@ -339,6 +339,7 @@ const sampleProducts: Product[] = [
     inventory: 23,
     featured: true,
     averageRating: 4.5,
+    reviews: [],
     createdAt: Date.now() - 1000000,
     updatedAt: Date.now() - 500000
   },
@@ -352,6 +353,7 @@ const sampleProducts: Product[] = [
     inventory: 15,
     featured: false,
     averageRating: 4.3,
+    reviews: [],
     createdAt: Date.now() - 2000000,
     updatedAt: Date.now() - 1000000
   }
