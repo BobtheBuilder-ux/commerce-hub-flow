@@ -1,223 +1,386 @@
-
-import React, { useState, useEffect, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { Product } from '@/types';
+import ProductGrid from '@/components/product/ProductGrid';
+import ProductFilters from '@/components/product/ProductFilters';
+import SearchBar from '@/components/product/SearchBar';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import ProductGrid from '@/components/product/ProductGrid';
-import SearchBar from '@/components/product/SearchBar';
-import ProductFilters from '@/components/product/ProductFilters';
 import { Button } from '@/components/ui/button';
-import { Badge } from "@/components/ui/badge";
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 const Products = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('featured');
-  const [priceRange, setPriceRange] = useState([0, 500]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [showOnlyInStock, setShowOnlyInStock] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
+  const [showOnSale, setShowOnSale] = useState(false);
+  const [showInStock, setShowInStock] = useState(false);
 
-  // Extract query parameters
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const queryParam = params.get('query');
-    const categoryParam = params.get('category');
-    const sortParam = params.get('sort');
-    const featuredParam = params.get('featured');
-    
-    if (queryParam) setSearchQuery(queryParam);
-    if (categoryParam) setSelectedCategories([categoryParam]);
-    if (sortParam) setSortBy(sortParam);
-    if (featuredParam === 'true') setSortBy('featured');
-  }, [location.search]);
+  // Sample products data
+  const sampleProducts: Product[] = [
+    {
+      id: '1',
+      name: 'Premium Wireless Headphones',
+      description: 'High-quality wireless headphones with noise cancellation',
+      price: 89.99,
+      salePrice: 69.99,
+      images: ['/placeholder.svg'],
+      category: 'Electronics',
+      inventory: 23,
+      featured: true,
+      averageRating: 4.5,
+      reviews: [],
+      createdAt: Date.now() - 1000000,
+      updatedAt: Date.now() - 500000
+    },
+    {
+      id: '2',
+      name: 'Smart Fitness Tracker',
+      description: 'Track your health and fitness goals with this smart device',
+      price: 59.99,
+      images: ['/placeholder.svg'],
+      category: 'Electronics',
+      inventory: 15,
+      featured: true,
+      averageRating: 4.2,
+      reviews: [],
+      createdAt: Date.now() - 2000000,
+      updatedAt: Date.now() - 1000000
+    },
+    {
+      id: '3',
+      name: 'Organic Cotton T-Shirt',
+      description: 'Comfortable and eco-friendly cotton t-shirt',
+      price: 24.99,
+      salePrice: 19.99,
+      images: ['/placeholder.svg'],
+      category: 'Clothing',
+      inventory: 50,
+      featured: false,
+      averageRating: 4.0,
+      reviews: [],
+      createdAt: Date.now() - 3000000,
+      updatedAt: Date.now() - 1500000
+    },
+    {
+      id: '4',
+      name: 'Stainless Steel Water Bottle',
+      description: 'Eco-friendly and durable water bottle',
+      price: 19.99,
+      images: ['/placeholder.svg'],
+      category: 'Home & Kitchen',
+      inventory: 35,
+      featured: true,
+      averageRating: 4.8,
+      reviews: [],
+      createdAt: Date.now() - 4000000,
+      updatedAt: Date.now() - 2000000
+    },
+    {
+      id: '5',
+      name: 'Yoga Mat',
+      description: 'Non-slip eco-friendly yoga mat',
+      price: 29.99,
+      images: ['/placeholder.svg'],
+      category: 'Fitness',
+      inventory: 20,
+      featured: false,
+      averageRating: 4.3,
+      reviews: [],
+      createdAt: Date.now() - 5000000,
+      updatedAt: Date.now() - 3000000
+    },
+    {
+      id: '6',
+      name: 'Coffee Maker',
+      description: 'Automatic drip coffee maker with timer',
+      price: 49.99,
+      salePrice: 39.99,
+      images: ['/placeholder.svg'],
+      category: 'Home & Kitchen',
+      inventory: 12,
+      featured: true,
+      averageRating: 4.1,
+      reviews: [],
+      createdAt: Date.now() - 6000000,
+      updatedAt: Date.now() - 3500000
+    },
+    {
+      id: '7',
+      name: 'Laptop Backpack',
+      description: 'Waterproof backpack with laptop compartment',
+      price: 39.99,
+      images: ['/placeholder.svg'],
+      category: 'Bags',
+      inventory: 18,
+      featured: false,
+      averageRating: 4.7,
+      reviews: [],
+      createdAt: Date.now() - 7000000,
+      updatedAt: Date.now() - 4000000
+    },
+    {
+      id: '8',
+      name: 'Smartphone Case',
+      description: 'Protective case for latest smartphone models',
+      price: 14.99,
+      salePrice: 9.99,
+      images: ['/placeholder.svg'],
+      category: 'Electronics',
+      inventory: 40,
+      featured: false,
+      averageRating: 4.0,
+      reviews: [],
+      createdAt: Date.now() - 8000000,
+      updatedAt: Date.now() - 4500000
+    }
+  ];
 
-  // Load sample products
+  const categories = ['Electronics', 'Clothing', 'Home & Kitchen', 'Fitness', 'Bags'];
+
   useEffect(() => {
-    setIsLoading(true);
-    // Simulate loading
-    setTimeout(() => {
-      setProducts(sampleProducts);
-      setIsLoading(false);
-    }, 1000);
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        // Use sample data for demonstration
+        setProducts(sampleProducts);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProducts(sampleProducts);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProducts();
   }, []);
 
-  // Filter and sort products
-  const filteredProducts = useMemo(() => {
-    let filtered = [...products];
+  useEffect(() => {
+    // Apply filters
+    let filtered = products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = !selectedCategory || product.category === selectedCategory;
+      const matchesPrice = product.price >= priceRange.min && product.price <= priceRange.max;
+      const matchesSale = !showOnSale || product.salePrice;
+      const matchesStock = !showInStock || product.inventory > 0;
 
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Apply category filter
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter(product =>
-        selectedCategories.includes(product.category.toLowerCase())
-      );
-    }
-
-    // Apply price range filter
-    filtered = filtered.filter(product =>
-      product.price >= priceRange[0] && product.price <= priceRange[1]
-    );
-
-    // Apply stock filter
-    if (showOnlyInStock) {
-      filtered = filtered.filter(product => product.inventory > 0);
-    }
+      return matchesSearch && matchesCategory && matchesPrice && matchesSale && matchesStock;
+    });
 
     // Apply sorting
-    switch (sortBy) {
-      case 'price-low':
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high':
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case 'newest':
-        filtered.sort((a, b) => b.createdAt - a.createdAt);
-        break;
-      case 'featured':
-        filtered.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
-        break;
-      default:
-        break;
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return (a.salePrice || a.price) - (b.salePrice || b.price);
+        case 'price-high':
+          return (b.salePrice || b.price) - (a.salePrice || a.price);
+        case 'rating':
+          return b.averageRating - a.averageRating;
+        case 'newest':
+          return b.createdAt - a.createdAt;
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+
+    setFilteredProducts(filtered);
+  }, [products, searchTerm, selectedCategory, sortBy, priceRange, showOnSale, showInStock]);
+
+  // Handle URL parameters
+  useEffect(() => {
+    const featured = searchParams.get('featured');
+    const category = searchParams.get('category');
+    const sale = searchParams.get('sale');
+    
+    if (featured === 'true') {
+      setFilteredProducts(products.filter(p => p.featured));
     }
-
-    return filtered;
-  }, [products, searchQuery, selectedCategories, priceRange, showOnlyInStock, sortBy]);
-
-  const handleSearch = () => {
-    // Update URL with search parameters
-    const params = new URLSearchParams();
-    if (searchQuery) params.set('query', searchQuery);
-    if (selectedCategories.length) params.set('category', selectedCategories[0]);
-    if (sortBy) params.set('sort', sortBy);
-    navigate(`/products?${params.toString()}`);
-  };
+    if (category) {
+      setSelectedCategory(category);
+    }
+    if (sale === 'true') {
+      setShowOnSale(true);
+    }
+  }, [searchParams, products]);
 
   const clearFilters = () => {
-    setSearchQuery('');
-    setSortBy('featured');
-    setPriceRange([0, 500]);
-    setSelectedCategories([]);
-    setShowOnlyInStock(false);
-    navigate('/products');
+    setSearchTerm('');
+    setSelectedCategory('');
+    setSortBy('name');
+    setPriceRange({ min: 0, max: 1000 });
+    setShowOnSale(false);
+    setShowInStock(false);
+    setSearchParams({});
   };
-
-  const hasActiveFilters = searchQuery || selectedCategories.length > 0 || sortBy !== 'featured' || showOnlyInStock || priceRange[0] !== 0 || priceRange[1] !== 500;
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
       <main className="container mx-auto px-4 py-8 flex-grow">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-brand-chocolate mb-4">Shop Our Products</h1>
-          <p className="text-brand-chocolate-light text-lg mb-6">Discover our carefully curated collection</p>
-        </div>
-        
-        {/* Search Bar */}
-        <div className="mb-8">
-          <SearchBar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onSearchSubmit={handleSearch}
-          />
-        </div>
-        
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
-          <div className="lg:w-1/4">
-            <div className="lg:hidden mb-4">
-              <Button 
-                onClick={() => setShowFilters(!showFilters)}
-                variant="outline"
-                className="w-full border-brand-chocolate text-brand-chocolate"
-              >
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </Button>
-            </div>
-            
-            <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-              <ProductFilters
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-                selectedCategories={selectedCategories}
-                setSelectedCategories={setSelectedCategories}
-                priceRange={priceRange}
-                setPriceRange={setPriceRange}
-                showOnlyInStock={showOnlyInStock}
-                setShowOnlyInStock={setShowOnlyInStock}
-                onClearFilters={clearFilters}
-                hasActiveFilters={hasActiveFilters}
-              />
-            </div>
-          </div>
-          
+          <aside className="lg:w-1/4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Filters</h3>
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    Clear All
+                  </Button>
+                </div>
+
+                {/* Search */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Search</label>
+                    <Input
+                      placeholder="Search products..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Category */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Category</label>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Categories" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">All Categories</SelectItem>
+                        {categories.map(category => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Separator />
+
+                  {/* Price Range */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Price Range</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Min"
+                        value={priceRange.min}
+                        onChange={(e) => setPriceRange(prev => ({ ...prev, min: Number(e.target.value) }))}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Max"
+                        value={priceRange.max}
+                        onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
+                      />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Quick Filters */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Quick Filters</label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="on-sale"
+                        checked={showOnSale}
+                        onCheckedChange={(checked) => setShowOnSale(Boolean(checked))}
+                      />
+                      <label htmlFor="on-sale" className="text-sm">On Sale</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="in-stock"
+                        checked={showInStock}
+                        onCheckedChange={(checked) => setShowInStock(Boolean(checked))}
+                      />
+                      <label htmlFor="in-stock" className="text-sm">In Stock</label>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
+
           {/* Products Grid */}
           <div className="lg:w-3/4">
-            {/* Active Filters Display */}
-            {hasActiveFilters && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                {searchQuery && (
-                  <Badge variant="secondary" className="bg-brand-gold text-brand-chocolate">
-                    Search: {searchQuery}
-                  </Badge>
-                )}
-                {selectedCategories.map(category => (
-                  <Badge key={category} variant="secondary" className="bg-brand-chocolate text-white">
-                    Category: {category}
-                  </Badge>
-                ))}
-                {sortBy !== 'featured' && (
-                  <Badge variant="secondary" className="bg-brand-beige text-brand-chocolate">
-                    Sort: {sortBy.replace('-', ' to ')}
-                  </Badge>
-                )}
-                {showOnlyInStock && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    In Stock Only
-                  </Badge>
-                )}
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+              <div>
+                <h1 className="text-3xl font-bold text-brand-chocolate mb-2">Products</h1>
+                <p className="text-gray-600">
+                  Showing {filteredProducts.length} of {products.length} products
+                </p>
               </div>
-            )}
-
-            {/* Results Count */}
-            <div className="mb-6">
-              <p className="text-brand-chocolate">
-                {isLoading ? 'Loading...' : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''} found`}
-              </p>
+              
+              {/* Sort */}
+              <div className="mt-4 sm:mt-0">
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name (A-Z)</SelectItem>
+                    <SelectItem value="price-low">Price (Low to High)</SelectItem>
+                    <SelectItem value="price-high">Price (High to Low)</SelectItem>
+                    <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="newest">Newest</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Products Grid */}
-            {isLoading ? (
-              <ProductGrid products={[]} isLoading={true} />
-            ) : filteredProducts.length > 0 ? (
-              <ProductGrid products={filteredProducts} />
-            ) : (
-              <div className="text-center py-16">
-                <h3 className="text-xl font-medium text-brand-chocolate mb-4">No products found</h3>
-                <p className="text-brand-chocolate-light mb-6">Try adjusting your search or filters</p>
-                <Button 
-                  onClick={clearFilters}
-                  className="bg-brand-gold hover:bg-brand-gold-dark text-brand-chocolate"
-                >
-                  Clear All Filters
-                </Button>
+            {/* Active Filters */}
+            {(searchTerm || selectedCategory || showOnSale || showInStock) && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {searchTerm && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    Search: {searchTerm}
+                    <button onClick={() => setSearchTerm('')} className="ml-1 hover:text-red-500">×</button>
+                  </Badge>
+                )}
+                {selectedCategory && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    Category: {selectedCategory}
+                    <button onClick={() => setSelectedCategory('')} className="ml-1 hover:text-red-500">×</button>
+                  </Badge>
+                )}
+                {showOnSale && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    On Sale
+                    <button onClick={() => setShowOnSale(false)} className="ml-1 hover:text-red-500">×</button>
+                  </Badge>
+                )}
+                {showInStock && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    In Stock
+                    <button onClick={() => setShowInStock(false)} className="ml-1 hover:text-red-500">×</button>
+                  </Badge>
+                )}
               </div>
             )}
+
+            {/* Products */}
+            <ProductGrid products={filteredProducts} isLoading={isLoading} />
           </div>
         </div>
       </main>
@@ -226,124 +389,5 @@ const Products = () => {
     </div>
   );
 };
-
-// Enhanced sample data with more products for better testing
-const sampleProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Premium Wireless Headphones',
-    description: 'High-quality wireless headphones with noise cancellation and premium sound quality.',
-    price: 89.99,
-    salePrice: 69.99,
-    images: ['/placeholder.svg'],
-    category: 'Electronics',
-    inventory: 23,
-    featured: true,
-    averageRating: 4.5,
-    reviews: [],
-    createdAt: Date.now() - 1000000,
-    updatedAt: Date.now() - 500000
-  },
-  {
-    id: '2',
-    name: 'Smart Fitness Watch',
-    description: 'Advanced smartwatch with health tracking, GPS, and long battery life.',
-    price: 129.99,
-    images: ['/placeholder.svg'],
-    category: 'Electronics',
-    inventory: 15,
-    featured: false,
-    averageRating: 4.3,
-    reviews: [],
-    createdAt: Date.now() - 2000000,
-    updatedAt: Date.now() - 1000000
-  },
-  {
-    id: '3',
-    name: 'Organic Cotton T-Shirt',
-    description: 'Comfortable and eco-friendly organic cotton t-shirt in various colors.',
-    price: 24.99,
-    salePrice: 19.99,
-    images: ['/placeholder.svg'],
-    category: 'Clothing',
-    inventory: 50,
-    featured: false,
-    averageRating: 4.0,
-    reviews: [],
-    createdAt: Date.now() - 3000000,
-    updatedAt: Date.now() - 1500000
-  },
-  {
-    id: '4',
-    name: 'Stainless Steel Water Bottle',
-    description: 'Eco-friendly and durable stainless steel water bottle with temperature control.',
-    price: 19.99,
-    images: ['/placeholder.svg'],
-    category: 'Home-Kitchen',
-    inventory: 35,
-    featured: true,
-    averageRating: 4.8,
-    reviews: [],
-    createdAt: Date.now() - 4000000,
-    updatedAt: Date.now() - 2000000
-  },
-  {
-    id: '5',
-    name: 'Premium Yoga Mat',
-    description: 'Non-slip eco-friendly yoga mat with superior grip and cushioning.',
-    price: 29.99,
-    images: ['/placeholder.svg'],
-    category: 'Fitness',
-    inventory: 20,
-    featured: false,
-    averageRating: 4.3,
-    reviews: [],
-    createdAt: Date.now() - 5000000,
-    updatedAt: Date.now() - 3000000
-  },
-  {
-    id: '6',
-    name: 'Artisan Coffee Beans',
-    description: 'Premium single-origin coffee beans roasted to perfection.',
-    price: 18.99,
-    images: ['/placeholder.svg'],
-    category: 'Food',
-    inventory: 45,
-    featured: true,
-    averageRating: 4.7,
-    reviews: [],
-    createdAt: Date.now() - 6000000,
-    updatedAt: Date.now() - 3500000
-  },
-  {
-    id: '7',
-    name: 'Gold Pendant Necklace',
-    description: 'Elegant 14k gold pendant necklace with premium craftsmanship.',
-    price: 299.99,
-    salePrice: 249.99,
-    images: ['/placeholder.svg'],
-    category: 'Jewelry',
-    inventory: 8,
-    featured: true,
-    averageRating: 4.9,
-    reviews: [],
-    createdAt: Date.now() - 7000000,
-    updatedAt: Date.now() - 4000000
-  },
-  {
-    id: '8',
-    name: 'Leather Laptop Bag',
-    description: 'Professional leather laptop bag with multiple compartments.',
-    price: 79.99,
-    images: ['/placeholder.svg'],
-    category: 'Accessories',
-    inventory: 12,
-    featured: false,
-    averageRating: 4.4,
-    reviews: [],
-    createdAt: Date.now() - 8000000,
-    updatedAt: Date.now() - 4500000
-  }
-];
 
 export default Products;

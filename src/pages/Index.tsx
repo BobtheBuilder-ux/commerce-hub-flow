@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Product } from '@/types';
 import ProductGrid from '@/components/product/ProductGrid';
+import ModernHero from '@/components/hero/ModernHero';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Star, ShoppingCart, Users } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
@@ -38,49 +38,8 @@ const Index = () => {
       <Navbar />
       
       <main className="flex-grow">
-        {/* Hero Banner */}
-        <section className="chocolate-gradient text-white py-20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-black opacity-20"></div>
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="flex flex-col lg:flex-row items-center justify-between">
-              <div className="lg:w-1/2 mb-8 lg:mb-0 text-center lg:text-left">
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-                  Discover
-                  <span className="block text-brand-gold">Golden</span>
-                  Treasures
-                </h1>
-                <p className="text-xl md:text-2xl mb-8 text-brand-beige-light max-w-2xl">
-                  Curated collection of premium products with exceptional quality and timeless elegance
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Link to="/products">
-                    <Button size="lg" className="bg-brand-gold text-brand-chocolate hover:bg-brand-gold-dark font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                      Shop Now
-                      <ShoppingCart className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                  <Link to="/categories">
-                    <Button size="lg" variant="outline" className="border-2 border-white hover:bg-white hover:text-brand-chocolate text-white font-semibold px-8 py-4 rounded-xl">
-                      Browse Categories
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-              <div className="lg:w-1/2 flex justify-center">
-                <div className="relative">
-                  <div className="w-80 h-80 lg:w-96 lg:h-96 rounded-full bg-gradient-to-br from-brand-gold via-brand-amber to-brand-bronze shadow-2xl flex items-center justify-center">
-                    <img 
-                      src="/placeholder.svg" 
-                      alt="Premium Collection" 
-                      className="w-64 h-64 lg:w-80 lg:h-80 object-cover rounded-full shadow-xl border-4 border-white" 
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Modern Hero Section */}
+        <ModernHero />
 
         {/* Features Section */}
         <section className="py-16 bg-gradient-to-br from-brand-beige-light to-brand-cream">
