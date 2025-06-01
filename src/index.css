@@ -5,82 +5,82 @@
 
 @layer base {
   :root {
-    --background: 45 25% 95%;
+    --background: 45 25% 98%;
     --foreground: 30 15% 15%;
 
-    --card: 45 25% 98%;
+    --card: 45 25% 99%;
     --card-foreground: 30 15% 15%;
 
-    --popover: 45 25% 98%;
+    --popover: 45 25% 99%;
     --popover-foreground: 30 15% 15%;
 
     --primary: 45 100% 50%;
     --primary-foreground: 30 15% 15%;
 
-    --secondary: 30 15% 88%;
+    --secondary: 30 15% 92%;
     --secondary-foreground: 30 15% 15%;
 
-    --muted: 30 15% 88%;
+    --muted: 30 15% 92%;
     --muted-foreground: 30 15% 45%;
 
-    --accent: 30 15% 88%;
+    --accent: 45 80% 85%;
     --accent-foreground: 30 15% 15%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 30 15% 82%;
-    --input: 30 15% 82%;
+    --border: 30 15% 85%;
+    --input: 30 15% 85%;
     --ring: 45 100% 50%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 45 25% 95%;
+    --sidebar-background: 45 25% 98%;
     --sidebar-foreground: 30 15% 15%;
     --sidebar-primary: 30 15% 15%;
-    --sidebar-primary-foreground: 45 25% 95%;
-    --sidebar-accent: 30 15% 88%;
+    --sidebar-primary-foreground: 45 25% 98%;
+    --sidebar-accent: 45 80% 85%;
     --sidebar-accent-foreground: 30 15% 15%;
-    --sidebar-border: 30 15% 82%;
+    --sidebar-border: 30 15% 85%;
     --sidebar-ring: 45 100% 50%;
   }
 
   .dark {
     --background: 30 15% 8%;
-    --foreground: 45 25% 90%;
+    --foreground: 45 25% 95%;
 
-    --card: 30 15% 8%;
-    --card-foreground: 45 25% 90%;
+    --card: 30 15% 10%;
+    --card-foreground: 45 25% 95%;
 
     --popover: 30 15% 8%;
-    --popover-foreground: 45 25% 90%;
+    --popover-foreground: 45 25% 95%;
 
     --primary: 45 100% 50%;
     --primary-foreground: 30 15% 8%;
 
     --secondary: 30 15% 15%;
-    --secondary-foreground: 45 25% 90%;
+    --secondary-foreground: 45 25% 95%;
 
     --muted: 30 15% 15%;
     --muted-foreground: 30 15% 60%;
 
-    --accent: 30 15% 15%;
-    --accent-foreground: 45 25% 90%;
+    --accent: 30 15% 20%;
+    --accent-foreground: 45 25% 95%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 30 15% 15%;
-    --input: 30 15% 15%;
+    --border: 30 15% 20%;
+    --input: 30 15% 20%;
     --ring: 45 100% 50%;
     
     --sidebar-background: 30 15% 8%;
-    --sidebar-foreground: 45 25% 90%;
+    --sidebar-foreground: 45 25% 95%;
     --sidebar-primary: 45 100% 50%;
     --sidebar-primary-foreground: 30 15% 8%;
-    --sidebar-accent: 30 15% 15%;
-    --sidebar-accent-foreground: 45 25% 90%;
-    --sidebar-border: 30 15% 15%;
+    --sidebar-accent: 30 15% 20%;
+    --sidebar-accent-foreground: 45 25% 95%;
+    --sidebar-border: 30 15% 20%;
     --sidebar-ring: 45 100% 50%;
   }
 }
@@ -92,19 +92,37 @@
 
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, #FAF0E6 0%, #F5F5DC 50%, #FFFDD0 100%);
+    min-height: 100vh;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-brand-gold text-brand-chocolate py-2 px-4 rounded-md hover:bg-brand-gold-dark transition duration-300;
+    @apply bg-brand-gold text-brand-chocolate py-2 px-6 rounded-lg hover:bg-brand-gold-dark transition-all duration-300 shadow-md hover:shadow-lg font-medium;
+  }
+  
+  .btn-secondary {
+    @apply bg-brand-chocolate text-white py-2 px-6 rounded-lg hover:bg-brand-chocolate-dark transition-all duration-300 shadow-md hover:shadow-lg font-medium;
   }
   
   .card-hover {
-    @apply hover:shadow-lg transition-shadow duration-300;
+    @apply hover:shadow-xl transition-all duration-300 hover:-translate-y-1;
   }
   
   .dashboard-grid {
     @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+
+  .gradient-bg {
+    background: linear-gradient(135deg, #FFD700 0%, #FFBF00 25%, #B8860B 50%, #8B4513 75%, #654321 100%);
+  }
+
+  .chocolate-gradient {
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD7F32 100%);
+  }
+
+  .gold-gradient {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
   }
 }

@@ -17,7 +17,11 @@ const Sale = () => {
       description: 'Premium organic honey',
       category: 'Food',
       inventory: 50,
-      featured: false
+      featured: false,
+      reviews: [],
+      averageRating: 4.5,
+      createdAt: Date.now() - 1000000,
+      updatedAt: Date.now() - 500000
     },
     {
       id: '2',
@@ -28,7 +32,11 @@ const Sale = () => {
       description: 'Assorted chocolate collection',
       category: 'Food',
       inventory: 20,
-      featured: false
+      featured: false,
+      reviews: [],
+      averageRating: 4.2,
+      createdAt: Date.now() - 2000000,
+      updatedAt: Date.now() - 1000000
     }
   ];
 

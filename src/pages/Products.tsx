@@ -1,24 +1,14 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { collection, query, getDocs, where, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Product } from '@/types';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ProductGrid from '@/components/product/ProductGrid';
-import { Input } from '@/components/ui/input';
+import SearchBar from '@/components/product/SearchBar';
+import ProductFilters from '@/components/product/ProductFilters';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
-import { SearchIcon, FilterX } from 'lucide-react';
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -28,12 +18,10 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showOnlyInStock, setShowOnlyInStock] = useState(false);
-  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   
   const location = useLocation();
   const navigate = useNavigate();
-  const PRODUCTS_PER_PAGE = 12;
 
   // Extract query parameters
   useEffect(() => {
@@ -47,279 +35,191 @@ const Products = () => {
     if (categoryParam) setSelectedCategories([categoryParam]);
     if (sortParam) setSortBy(sortParam);
     if (featuredParam === 'true') setSortBy('featured');
-    
-    // Reset products when filters change
-    setProducts([]);
-    setLastVisible(null);
-    setHasMore(true);
   }, [location.search]);
 
-  // Fetch products
+  // Load sample products
   useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        // Build query based on filters
-        let productsQuery = collection(db, 'products');
-        let queryConstraints = [];
-        
-        // Apply category filter
-        if (selectedCategories.length > 0) {
-          queryConstraints.push(where('category', 'in', selectedCategories));
-        }
-        
-        // Apply stock filter
-        if (showOnlyInStock) {
-          queryConstraints.push(where('inventory', '>', 0));
-        }
-        
-        // Apply price range filter (client-side filter for now)
-        
-        // Apply sorting
-        switch (sortBy) {
-          case 'featured':
-            queryConstraints.push(where('featured', '==', true));
-            queryConstraints.push(orderBy('createdAt', 'desc'));
-            break;
-          case 'price-low':
-            queryConstraints.push(orderBy('price', 'asc'));
-            break;
-          case 'price-high':
-            queryConstraints.push(orderBy('price', 'desc'));
-            break;
-          case 'newest':
-            queryConstraints.push(orderBy('createdAt', 'desc'));
-            break;
-          default:
-            queryConstraints.push(orderBy('createdAt', 'desc'));
-        }
-        
-        // Apply pagination
-        queryConstraints.push(limit(PRODUCTS_PER_PAGE));
-        if (lastVisible) {
-          queryConstraints.push(startAfter(lastVisible));
-        }
-        
-        const q = query(productsQuery, ...queryConstraints);
-        const querySnapshot = await getDocs(q);
-        
-        // Process results
-        const newProducts: Product[] = [];
-        querySnapshot.forEach((doc) => {
-          newProducts.push({ id: doc.id, ...doc.data() } as Product);
-        });
-        
-        // Apply client-side search filter
-        const filteredProducts = searchQuery 
-          ? newProducts.filter(p => 
-              p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-              p.description.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-          : newProducts;
-        
-        // Apply price range filter (client-side)
-        const priceFilteredProducts = filteredProducts.filter(
-          p => p.price >= priceRange[0] && p.price <= priceRange[1]
-        );
+    setIsLoading(true);
+    // Simulate loading
+    setTimeout(() => {
+      setProducts(sampleProducts);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
 
-        setProducts(prev => lastVisible ? [...prev, ...priceFilteredProducts] : priceFilteredProducts);
-        setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1] || null);
-        setHasMore(querySnapshot.docs.length === PRODUCTS_PER_PAGE);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        // Use sample data for demonstration
-        setProducts(sampleProducts);
-        setHasMore(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Filter and sort products
+  const filteredProducts = useMemo(() => {
+    let filtered = [...products];
 
-    fetchProducts();
-  }, [selectedCategories, sortBy, showOnlyInStock, priceRange, lastVisible, searchQuery]);
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+    // Apply category filter
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter(product =>
+        selectedCategories.includes(product.category.toLowerCase())
+      );
+    }
+
+    // Apply price range filter
+    filtered = filtered.filter(product =>
+      product.price >= priceRange[0] && product.price <= priceRange[1]
+    );
+
+    // Apply stock filter
+    if (showOnlyInStock) {
+      filtered = filtered.filter(product => product.inventory > 0);
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'price-low':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'newest':
+        filtered.sort((a, b) => b.createdAt - a.createdAt);
+        break;
+      case 'featured':
+        filtered.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+        break;
+      default:
+        break;
+    }
+
+    return filtered;
+  }, [products, searchQuery, selectedCategories, priceRange, showOnlyInStock, sortBy]);
+
+  const handleSearch = () => {
     // Update URL with search parameters
     const params = new URLSearchParams();
     if (searchQuery) params.set('query', searchQuery);
     if (selectedCategories.length) params.set('category', selectedCategories[0]);
     if (sortBy) params.set('sort', sortBy);
-
     navigate(`/products?${params.toString()}`);
   };
 
-  const handleLoadMore = () => {
-    // Trigger next page load
-    if (hasMore && !isLoading) {
-      fetchMoreProducts();
-    }
-  };
-
-  const fetchMoreProducts = async () => {
-    // This will trigger the useEffect that loads products
-    // since lastVisible is a dependency and we're keeping the same filters
-  };
-
   const clearFilters = () => {
-    navigate('/products');
     setSearchQuery('');
     setSortBy('featured');
     setPriceRange([0, 500]);
     setSelectedCategories([]);
     setShowOnlyInStock(false);
+    navigate('/products');
   };
+
+  const hasActiveFilters = searchQuery || selectedCategories.length > 0 || sortBy !== 'featured' || showOnlyInStock || priceRange[0] !== 0 || priceRange[1] !== 500;
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
       <main className="container mx-auto px-4 py-8 flex-grow">
-        <h1 className="text-3xl font-bold mb-8">Shop Our Products</h1>
-        
-        {/* Search and Filter Section */}
-        <div className="mb-8">
-          <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-            <div className="relative flex-grow">
-              <SearchIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button type="submit">Search</Button>
-          </form>
-          
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
-            {/* Sort Options */}
-            <div className="w-full md:w-48">
-              <Select 
-                value={sortBy} 
-                onValueChange={setSortBy}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort By" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="featured">Featured</SelectItem>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Category Filter */}
-            <div className="w-full md:w-56">
-              <Select 
-                value={selectedCategories[0] || ''} 
-                onValueChange={(value) => setSelectedCategories(value ? [value] : [])}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
-                  <SelectItem value="electronics">Electronics</SelectItem>
-                  <SelectItem value="clothing">Clothing</SelectItem>
-                  <SelectItem value="home-kitchen">Home & Kitchen</SelectItem>
-                  <SelectItem value="fitness">Fitness</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Stock Filter */}
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="inStock" 
-                checked={showOnlyInStock}
-                onCheckedChange={(checked) => setShowOnlyInStock(!!checked)}
-              />
-              <label htmlFor="inStock" className="text-sm font-medium">
-                In stock only
-              </label>
-            </div>
-            
-            {/* Clear Filters */}
-            {(searchQuery || selectedCategories.length > 0 || sortBy !== 'featured' || showOnlyInStock) && (
-              <Button variant="outline" onClick={clearFilters} className="flex items-center">
-                <FilterX className="mr-2 h-4 w-4" /> Clear Filters
-              </Button>
-            )}
-          </div>
-          
-          {/* Price Range Slider */}
-          <div className="mb-2">
-            <h3 className="text-sm font-medium mb-2">Price Range: ${priceRange[0]} - ${priceRange[1]}</h3>
-            <Slider 
-              defaultValue={[0, 500]} 
-              min={0}
-              max={1000}
-              step={10}
-              value={priceRange}
-              onValueChange={setPriceRange}
-              className="mb-6"
-            />
-          </div>
-          
-          {/* Active Filters */}
-          <div className="flex flex-wrap gap-2">
-            {searchQuery && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                Search: {searchQuery}
-              </Badge>
-            )}
-            {selectedCategories.map(category => (
-              <Badge key={category} variant="secondary" className="flex items-center gap-1">
-                {category}
-              </Badge>
-            ))}
-            {sortBy !== 'featured' && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                Sort: {sortBy.replace('-', ' to ')}
-              </Badge>
-            )}
-            {showOnlyInStock && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                In Stock Only
-              </Badge>
-            )}
-          </div>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-brand-chocolate mb-4">Shop Our Products</h1>
+          <p className="text-brand-chocolate-light text-lg mb-6">Discover our carefully curated collection</p>
         </div>
-
-        {/* Products Grid */}
-        {isLoading && products.length === 0 ? (
-          <div className="flex justify-center items-center py-20">
-            <p>Loading products...</p>
-          </div>
-        ) : products.length > 0 ? (
-          <>
-            <ProductGrid products={products} />
+        
+        {/* Search Bar */}
+        <div className="mb-8">
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onSearchSubmit={handleSearch}
+          />
+        </div>
+        
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filters Sidebar */}
+          <div className="lg:w-1/4">
+            <div className="lg:hidden mb-4">
+              <Button 
+                onClick={() => setShowFilters(!showFilters)}
+                variant="outline"
+                className="w-full border-brand-chocolate text-brand-chocolate"
+              >
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </Button>
+            </div>
             
-            {/* Load More Button */}
-            {hasMore && (
-              <div className="flex justify-center mt-8">
+            <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
+              <ProductFilters
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                selectedCategories={selectedCategories}
+                setSelectedCategories={setSelectedCategories}
+                priceRange={priceRange}
+                setPriceRange={setPriceRange}
+                showOnlyInStock={showOnlyInStock}
+                setShowOnlyInStock={setShowOnlyInStock}
+                onClearFilters={clearFilters}
+                hasActiveFilters={hasActiveFilters}
+              />
+            </div>
+          </div>
+          
+          {/* Products Grid */}
+          <div className="lg:w-3/4">
+            {/* Active Filters Display */}
+            {hasActiveFilters && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {searchQuery && (
+                  <Badge variant="secondary" className="bg-brand-gold text-brand-chocolate">
+                    Search: {searchQuery}
+                  </Badge>
+                )}
+                {selectedCategories.map(category => (
+                  <Badge key={category} variant="secondary" className="bg-brand-chocolate text-white">
+                    Category: {category}
+                  </Badge>
+                ))}
+                {sortBy !== 'featured' && (
+                  <Badge variant="secondary" className="bg-brand-beige text-brand-chocolate">
+                    Sort: {sortBy.replace('-', ' to ')}
+                  </Badge>
+                )}
+                {showOnlyInStock && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    In Stock Only
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Results Count */}
+            <div className="mb-6">
+              <p className="text-brand-chocolate">
+                {isLoading ? 'Loading...' : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''} found`}
+              </p>
+            </div>
+
+            {/* Products Grid */}
+            {isLoading ? (
+              <ProductGrid products={[]} isLoading={true} />
+            ) : filteredProducts.length > 0 ? (
+              <ProductGrid products={filteredProducts} />
+            ) : (
+              <div className="text-center py-16">
+                <h3 className="text-xl font-medium text-brand-chocolate mb-4">No products found</h3>
+                <p className="text-brand-chocolate-light mb-6">Try adjusting your search or filters</p>
                 <Button 
-                  onClick={handleLoadMore} 
-                  variant="outline"
-                  disabled={isLoading}
+                  onClick={clearFilters}
+                  className="bg-brand-gold hover:bg-brand-gold-dark text-brand-chocolate"
                 >
-                  {isLoading ? 'Loading...' : 'Load More Products'}
+                  Clear All Filters
                 </Button>
               </div>
             )}
-          </>
-        ) : (
-          <div className="text-center py-16">
-            <p className="text-xl text-gray-500">No products found matching your criteria.</p>
-            <Button variant="outline" onClick={clearFilters} className="mt-4">
-              Clear Filters
-            </Button>
           </div>
-        )}
+        </div>
       </main>
       
       <Footer />
@@ -327,13 +227,14 @@ const Products = () => {
   );
 };
 
-// Sample data for fallback
+// Enhanced sample data with more products for better testing
 const sampleProducts: Product[] = [
   {
     id: '1',
-    name: 'Wireless Headphones',
-    description: 'High-quality wireless headphones with noise cancellation',
+    name: 'Premium Wireless Headphones',
+    description: 'High-quality wireless headphones with noise cancellation and premium sound quality.',
     price: 89.99,
+    salePrice: 69.99,
     images: ['/placeholder.svg'],
     category: 'Electronics',
     inventory: 23,
@@ -345,8 +246,8 @@ const sampleProducts: Product[] = [
   },
   {
     id: '2',
-    name: 'Smart Watch',
-    description: 'Advanced smartwatch with health tracking features',
+    name: 'Smart Fitness Watch',
+    description: 'Advanced smartwatch with health tracking, GPS, and long battery life.',
     price: 129.99,
     images: ['/placeholder.svg'],
     category: 'Electronics',
@@ -356,6 +257,92 @@ const sampleProducts: Product[] = [
     reviews: [],
     createdAt: Date.now() - 2000000,
     updatedAt: Date.now() - 1000000
+  },
+  {
+    id: '3',
+    name: 'Organic Cotton T-Shirt',
+    description: 'Comfortable and eco-friendly organic cotton t-shirt in various colors.',
+    price: 24.99,
+    salePrice: 19.99,
+    images: ['/placeholder.svg'],
+    category: 'Clothing',
+    inventory: 50,
+    featured: false,
+    averageRating: 4.0,
+    reviews: [],
+    createdAt: Date.now() - 3000000,
+    updatedAt: Date.now() - 1500000
+  },
+  {
+    id: '4',
+    name: 'Stainless Steel Water Bottle',
+    description: 'Eco-friendly and durable stainless steel water bottle with temperature control.',
+    price: 19.99,
+    images: ['/placeholder.svg'],
+    category: 'Home-Kitchen',
+    inventory: 35,
+    featured: true,
+    averageRating: 4.8,
+    reviews: [],
+    createdAt: Date.now() - 4000000,
+    updatedAt: Date.now() - 2000000
+  },
+  {
+    id: '5',
+    name: 'Premium Yoga Mat',
+    description: 'Non-slip eco-friendly yoga mat with superior grip and cushioning.',
+    price: 29.99,
+    images: ['/placeholder.svg'],
+    category: 'Fitness',
+    inventory: 20,
+    featured: false,
+    averageRating: 4.3,
+    reviews: [],
+    createdAt: Date.now() - 5000000,
+    updatedAt: Date.now() - 3000000
+  },
+  {
+    id: '6',
+    name: 'Artisan Coffee Beans',
+    description: 'Premium single-origin coffee beans roasted to perfection.',
+    price: 18.99,
+    images: ['/placeholder.svg'],
+    category: 'Food',
+    inventory: 45,
+    featured: true,
+    averageRating: 4.7,
+    reviews: [],
+    createdAt: Date.now() - 6000000,
+    updatedAt: Date.now() - 3500000
+  },
+  {
+    id: '7',
+    name: 'Gold Pendant Necklace',
+    description: 'Elegant 14k gold pendant necklace with premium craftsmanship.',
+    price: 299.99,
+    salePrice: 249.99,
+    images: ['/placeholder.svg'],
+    category: 'Jewelry',
+    inventory: 8,
+    featured: true,
+    averageRating: 4.9,
+    reviews: [],
+    createdAt: Date.now() - 7000000,
+    updatedAt: Date.now() - 4000000
+  },
+  {
+    id: '8',
+    name: 'Leather Laptop Bag',
+    description: 'Professional leather laptop bag with multiple compartments.',
+    price: 79.99,
+    images: ['/placeholder.svg'],
+    category: 'Accessories',
+    inventory: 12,
+    featured: false,
+    averageRating: 4.4,
+    reviews: [],
+    createdAt: Date.now() - 8000000,
+    updatedAt: Date.now() - 4500000
   }
 ];
 

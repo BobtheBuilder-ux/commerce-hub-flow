@@ -18,7 +18,10 @@ const NewArrivals = () => {
       category: 'Food',
       inventory: 50,
       featured: true,
-      isNew: true
+      reviews: [],
+      averageRating: 4.5,
+      createdAt: Date.now() - 1000000,
+      updatedAt: Date.now() - 500000
     },
     {
       id: '2',
@@ -29,7 +32,10 @@ const NewArrivals = () => {
       category: 'Food',
       inventory: 30,
       featured: false,
-      isNew: true
+      reviews: [],
+      averageRating: 4.3,
+      createdAt: Date.now() - 2000000,
+      updatedAt: Date.now() - 1000000
     }
   ];
 

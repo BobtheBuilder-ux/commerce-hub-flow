@@ -16,7 +16,11 @@ const FeaturedProducts = () => {
       description: 'Beautiful gold jewelry piece',
       category: 'Jewelry',
       inventory: 10,
-      featured: true
+      featured: true,
+      reviews: [],
+      averageRating: 4.8,
+      createdAt: Date.now() - 1000000,
+      updatedAt: Date.now() - 500000
     },
     {
       id: '2',
@@ -26,7 +30,11 @@ const FeaturedProducts = () => {
       description: 'Luxury chocolate gift set',
       category: 'Food',
       inventory: 25,
-      featured: true
+      featured: true,
+      reviews: [],
+      averageRating: 4.6,
+      createdAt: Date.now() - 2000000,
+      updatedAt: Date.now() - 1000000
     }
   ];
 

@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -63,13 +64,18 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				brand: {
-					gold: '#FFD700',
-					'gold-dark': '#DAA520',
-					'gold-light': '#FFF8DC',
-					chocolate: '#8B4513',
-					'chocolate-dark': '#654321',
-					beige: '#F5F5DC',
-					'beige-dark': '#E6E6D4',
+					gold: '#FFD700',           // Rich gold
+					'gold-dark': '#B8860B',    // Dark goldenrod
+					'gold-light': '#FFF8DC',   // Cornsilk
+					chocolate: '#8B4513',      // Saddle brown
+					'chocolate-dark': '#654321', // Dark brown
+					'chocolate-light': '#A0522D', // Sienna
+					beige: '#F5F5DC',          // Beige
+					'beige-dark': '#D2B48C',   // Tan
+					'beige-light': '#FAF0E6',  // Linen
+					cream: '#FFFDD0',          // Cream
+					amber: '#FFBF00',          // Amber
+					bronze: '#CD7F32',         // Bronze
 				}
 			},
 			borderRadius: {

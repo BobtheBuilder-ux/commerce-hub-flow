@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -45,11 +46,9 @@ const AdminLoginForm = () => {
   const onSubmit = async (data: AdminLoginFormValues) => {
     setIsSubmitting(true);
     try {
-      await signIn(data.email, data.password);
-      
-      // Set user role to admin in Firestore (simple implementation)
-      // In production, you'd verify admin credentials properly
       const user = await signIn(data.email, data.password);
+      
+      // Set user role to admin in Firestore
       if (user) {
         await setDoc(doc(db, 'users', user.uid), {
           role: 'admin'
@@ -69,7 +68,7 @@ const AdminLoginForm = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-center mb-4">
-        <div className="bg-brand-purple p-3 rounded-full">
+        <div className="bg-brand-chocolate p-3 rounded-full">
           <Shield className="h-6 w-6 text-white" />
         </div>
       </div>
@@ -104,7 +103,7 @@ const AdminLoginForm = () => {
             )}
           />
           
-          <Button type="submit" className="w-full bg-brand-purple hover:bg-brand-purple-dark" disabled={isSubmitting}>
+          <Button type="submit" className="w-full bg-brand-chocolate hover:bg-brand-chocolate-dark" disabled={isSubmitting}>
             {isSubmitting ? 'Signing In...' : 'Sign In to Admin Panel'}
           </Button>
         </form>
