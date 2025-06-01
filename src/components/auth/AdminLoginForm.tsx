@@ -49,7 +49,7 @@ const AdminLoginForm = () => {
       const result = await signIn(data.email, data.password);
       
       // Set user role to admin in Firestore
-      if (result?.user) {
+      if (result && result.user) {
         await setDoc(doc(db, 'users', result.user.uid), {
           role: 'admin'
         }, { merge: true });

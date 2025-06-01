@@ -38,7 +38,7 @@ const Checkout = () => {
   }
 
   const paypalOptions = {
-    "client-id": "test", // In production, use actual PayPal client ID
+    clientId: "test", // In production, use actual PayPal client ID
     currency: "USD",
   };
 

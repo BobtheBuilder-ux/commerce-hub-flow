@@ -23,6 +23,7 @@ const PayPalButton: React.FC<PayPalButtonProps> = ({ onSuccess }) => {
           purchase_units: [
             {
               amount: {
+                currency_code: "USD",
                 value: (subtotal + 9.99 + (subtotal * 0.08)).toFixed(2),
               },
             },
