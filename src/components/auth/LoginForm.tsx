@@ -69,7 +69,7 @@ const LoginForm = () => {
         if (email) {
           setIsSubmitting(true);
           try {
-            // Fix: Pass both required arguments - email and currentUrl
+            // Fixed: Pass both required arguments - email and currentUrl
             await completePasswordlessSignIn(email, currentUrl);
             navigate('/dashboard');
           } catch (error) {

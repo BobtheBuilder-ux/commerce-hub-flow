@@ -49,25 +49,45 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       try {
         if (currentUser) {
           // Fetch cart from Firestore for logged in users
-          const cartDoc = await getDoc(doc(db, 'carts', currentUser.uid));
-          if (cartDoc.exists()) {
-            const cartData = cartDoc.data();
-            const cartItems: CartItem[] = cartData.items || [];
-            setItems(cartItems);
-          } else {
-            // New user, no cart yet
-            setItems([]);
+          try {
+            const cartDoc = await getDoc(doc(db, 'carts', currentUser.uid));
+            if (cartDoc.exists()) {
+              const cartData = cartDoc.data();
+              const cartItems: CartItem[] = cartData.items || [];
+              setItems(cartItems);
+            } else {
+              // New user, no cart yet
+              setItems([]);
+            }
+          } catch (firestoreError) {
+            console.warn("Firestore unavailable, using localStorage:", firestoreError);
+            // Fallback to localStorage if Firestore is unavailable
+            const storedCart = localStorage.getItem(CART_STORAGE_KEY);
+            if (storedCart) {
+              setItems(JSON.parse(storedCart));
+            } else {
+              setItems([]);
+            }
           }
         } else {
           // Use localStorage for guest users
           const storedCart = localStorage.getItem(CART_STORAGE_KEY);
           if (storedCart) {
-            setItems(JSON.parse(storedCart));
+            try {
+              setItems(JSON.parse(storedCart));
+            } catch (parseError) {
+              console.warn("Invalid cart data in localStorage, clearing:", parseError);
+              localStorage.removeItem(CART_STORAGE_KEY);
+              setItems([]);
+            }
+          } else {
+            setItems([]);
           }
         }
       } catch (error) {
         console.error("Error loading cart:", error);
-        toast.error("Failed to load your cart");
+        // Fallback to empty cart instead of showing error toast
+        setItems([]);
       } finally {
         setLoading(false);
       }
@@ -84,16 +104,28 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       try {
         if (currentUser) {
           // Save to Firestore for logged in users
-          await setDoc(doc(db, 'carts', currentUser.uid), {
-            items,
-            updatedAt: new Date(),
-          }, { merge: true });
+          try {
+            await setDoc(doc(db, 'carts', currentUser.uid), {
+              items,
+              updatedAt: new Date(),
+            }, { merge: true });
+          } catch (firestoreError) {
+            console.warn("Firestore unavailable, using localStorage:", firestoreError);
+            // Fallback to localStorage if Firestore is unavailable
+            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+          }
         } else {
           // Save to localStorage for guest users
           localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
         }
       } catch (error) {
         console.error("Error saving cart:", error);
+        // Still try to save to localStorage as fallback
+        try {
+          localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+        } catch (localStorageError) {
+          console.error("Failed to save to localStorage:", localStorageError);
+        }
       }
     };
 

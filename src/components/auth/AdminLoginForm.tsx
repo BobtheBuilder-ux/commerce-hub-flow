@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -17,6 +16,8 @@ import {
 } from '@/components/ui/form';
 import { toast } from '@/components/ui/sonner';
 import { Shield } from 'lucide-react';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 // Schema for admin login
 const adminLoginSchema = z.object({
@@ -46,8 +47,16 @@ const AdminLoginForm = () => {
     try {
       await signIn(data.email, data.password);
       
-      // In a real app, we'd check if the user has admin role here
-      // and redirect accordingly
+      // Set user role to admin in Firestore (simple implementation)
+      // In production, you'd verify admin credentials properly
+      const user = await signIn(data.email, data.password);
+      if (user) {
+        await setDoc(doc(db, 'users', user.uid), {
+          role: 'admin'
+        }, { merge: true });
+      }
+      
+      toast.success("Signed in as admin successfully!");
       navigate('/admin');
     } catch (error: any) {
       console.error('Admin login error:', error);

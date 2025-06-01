@@ -25,6 +25,15 @@ import ProductDetails from "./pages/ProductDetails";
 import Categories from "./pages/Categories";
 import Category from "./pages/Category";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import ThankYou from "./pages/ThankYou";
+import NewArrivals from "./pages/NewArrivals";
+import FeaturedProducts from "./pages/FeaturedProducts";
+import Sale from "./pages/Sale";
+import ContactUs from "./pages/ContactUs";
+import FAQ from "./pages/FAQ";
+import ShippingReturns from "./pages/ShippingReturns";
+import TermsConditions from "./pages/TermsConditions";
 import NotFound from "./pages/NotFound";
 
 // Auth required route component
@@ -80,6 +89,13 @@ const App = () => (
               <Route path="/categories" element={<Categories />} />
               <Route path="/categories/:categoryId" element={<Category />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/new-arrivals" element={<NewArrivals />} />
+              <Route path="/featured" element={<FeaturedProducts />} />
+              <Route path="/sale" element={<Sale />} />
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/shipping-returns" element={<ShippingReturns />} />
+              <Route path="/terms" element={<TermsConditions />} />
               
               {/* Protected customer routes */}
               <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
@@ -88,6 +104,8 @@ const App = () => (
               <Route path="/dashboard/addresses" element={<RequireAuth><Addresses /></RequireAuth>} />
               <Route path="/dashboard/payment-methods" element={<RequireAuth><PaymentMethods /></RequireAuth>} />
               <Route path="/dashboard/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
+              <Route path="/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
+              <Route path="/thank-you" element={<RequireAuth><ThankYou /></RequireAuth>} />
               
               {/* Protected admin routes */}
               <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
