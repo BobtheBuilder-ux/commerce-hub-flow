@@ -5,20 +5,24 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import PayPalButton from '@/components/payment/PayPalButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { toast } from '@/components/ui/sonner';
+import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 
 const Checkout = () => {
   const { items, subtotal, clearCart } = useCart();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
+  const handlePaymentSuccess = () => {
+    navigate('/thank-you');
+  };
+
   const handlePlaceOrder = () => {
-    // Simulate order placement
-    toast.success("Order placed successfully!");
+    // Simulate order placement for non-PayPal payments
     clearCart();
     navigate('/thank-you');
   };
@@ -32,6 +36,11 @@ const Checkout = () => {
     navigate('/cart');
     return null;
   }
+
+  const paypalOptions = {
+    "client-id": "test", // In production, use actual PayPal client ID
+    currency: "USD",
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -63,15 +72,23 @@ const Checkout = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Payment Information</CardTitle>
+                <CardTitle>Payment Method</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Input placeholder="Card Number" />
-                <div className="grid grid-cols-2 gap-4">
-                  <Input placeholder="MM/YY" />
-                  <Input placeholder="CVV" />
+                <PayPalScriptProvider options={paypalOptions}>
+                  <PayPalButton onSuccess={handlePaymentSuccess} />
+                </PayPalScriptProvider>
+                <div className="text-center text-sm text-gray-500">
+                  Or pay with card
                 </div>
-                <Input placeholder="Cardholder Name" />
+                <div className="space-y-4">
+                  <Input placeholder="Card Number" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input placeholder="MM/YY" />
+                    <Input placeholder="CVV" />
+                  </div>
+                  <Input placeholder="Cardholder Name" />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -113,7 +130,7 @@ const Checkout = () => {
                     className="w-full mt-6 bg-brand-gold hover:bg-brand-gold-dark text-brand-chocolate"
                     onClick={handlePlaceOrder}
                   >
-                    Place Order
+                    Place Order (Card Payment)
                   </Button>
                 </div>
               </CardContent>

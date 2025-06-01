@@ -1,162 +1,276 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShoppingCart, Users, Package, CreditCard, TrendingUp, ArrowUp, ArrowDown } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Package, 
+  ShoppingCart, 
+  Users, 
+  DollarSign,
+  TrendingUp,
+  Eye,
+  Edit,
+  Trash2,
+  Plus
+} from 'lucide-react';
+import { Product, Order } from '@/types';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const AdminDashboard = () => {
-  // In a real app, this would come from Firebase
-  const stats = {
-    totalSales: 24890,
-    salesChange: 12.5,
-    totalOrders: 356,
-    ordersChange: 8.2,
-    totalCustomers: 1245,
-    customersChange: 5.7,
-    totalProducts: 450,
-    lowStock: 12
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    totalOrders: 0,
+    totalRevenue: 0,
+    totalUsers: 0
+  });
+
+  useEffect(() => {
+    if (!currentUser) {
+      navigate('/admin/login');
+      return;
+    }
+
+    // Load mock data
+    const mockProducts: Product[] = [
+      {
+        id: '1',
+        name: 'Premium Wireless Headphones',
+        price: 89.99,
+        inventory: 23,
+        category: 'Electronics',
+        featured: true,
+        description: 'High-quality wireless headphones',
+        images: ['/placeholder.svg'],
+        averageRating: 4.5,
+        reviews: [],
+        createdAt: Date.now() - 1000000,
+        updatedAt: Date.now() - 500000
+      },
+      {
+        id: '2',
+        name: 'Smart Fitness Watch',
+        price: 129.99,
+        inventory: 15,
+        category: 'Electronics',
+        featured: false,
+        description: 'Advanced smartwatch with health tracking',
+        images: ['/placeholder.svg'],
+        averageRating: 4.3,
+        reviews: [],
+        createdAt: Date.now() - 2000000,
+        updatedAt: Date.now() - 1000000
+      }
+    ];
+
+    setProducts(mockProducts);
+    setStats({
+      totalProducts: mockProducts.length,
+      totalOrders: 45,
+      totalRevenue: 12450.00,
+      totalUsers: 234
+    });
+  }, [currentUser, navigate]);
+
+  const handleDeleteProduct = (productId: string) => {
+    setProducts(products.filter(p => p.id !== productId));
   };
 
   return (
-    <AdminLayout title="Admin Dashboard">
+    <AdminLayout>
       <div className="space-y-6">
-        {/* Stats Overview */}
+        <div>
+          <h1 className="text-3xl font-bold text-brand-chocolate">Admin Dashboard</h1>
+          <p className="text-brand-chocolate-light">Manage your store and monitor performance</p>
+        </div>
+
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Total Revenue</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+              <Package className="h-4 w-4 text-brand-gold" />
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">${stats.totalSales.toLocaleString()}</p>
-                  <div className="flex items-center space-x-1">
-                    <span className={`text-xs ${stats.salesChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {stats.salesChange >= 0 ? <ArrowUp className="inline h-3 w-3" /> : <ArrowDown className="inline h-3 w-3" />}
-                      {Math.abs(stats.salesChange)}%
-                    </span>
-                    <span className="text-xs text-gray-500">vs. last month</span>
-                  </div>
-                </div>
-                <div className="p-2 bg-brand-purple bg-opacity-10 rounded-full">
-                  <CreditCard className="h-5 w-5 text-brand-purple" />
-                </div>
-              </div>
+              <div className="text-2xl font-bold text-brand-chocolate">{stats.totalProducts}</div>
+              <p className="text-xs text-brand-chocolate-light">
+                <TrendingUp className="inline h-3 w-3 mr-1" />
+                +12% from last month
+              </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Orders</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-brand-gold" />
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">{stats.totalOrders}</p>
-                  <div className="flex items-center space-x-1">
-                    <span className={`text-xs ${stats.ordersChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {stats.ordersChange >= 0 ? <ArrowUp className="inline h-3 w-3" /> : <ArrowDown className="inline h-3 w-3" />}
-                      {Math.abs(stats.ordersChange)}%
-                    </span>
-                    <span className="text-xs text-gray-500">vs. last month</span>
-                  </div>
-                </div>
-                <div className="p-2 bg-amber-500 bg-opacity-10 rounded-full">
-                  <ShoppingCart className="h-5 w-5 text-amber-500" />
-                </div>
-              </div>
+              <div className="text-2xl font-bold text-brand-chocolate">{stats.totalOrders}</div>
+              <p className="text-xs text-brand-chocolate-light">
+                <TrendingUp className="inline h-3 w-3 mr-1" />
+                +8% from last month
+              </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Customers</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-brand-gold" />
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">{stats.totalCustomers}</p>
-                  <div className="flex items-center space-x-1">
-                    <span className={`text-xs ${stats.customersChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {stats.customersChange >= 0 ? <ArrowUp className="inline h-3 w-3" /> : <ArrowDown className="inline h-3 w-3" />}
-                      {Math.abs(stats.customersChange)}%
-                    </span>
-                    <span className="text-xs text-gray-500">vs. last month</span>
-                  </div>
-                </div>
-                <div className="p-2 bg-green-500 bg-opacity-10 rounded-full">
-                  <Users className="h-5 w-5 text-green-500" />
-                </div>
-              </div>
+              <div className="text-2xl font-bold text-brand-chocolate">${stats.totalRevenue.toLocaleString()}</div>
+              <p className="text-xs text-brand-chocolate-light">
+                <TrendingUp className="inline h-3 w-3 mr-1" />
+                +15% from last month
+              </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Products</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-brand-gold" />
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">{stats.totalProducts}</p>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-xs text-amber-600">
-                      {stats.lowStock} low stock
-                    </span>
-                  </div>
-                </div>
-                <div className="p-2 bg-blue-500 bg-opacity-10 rounded-full">
-                  <Package className="h-5 w-5 text-blue-500" />
-                </div>
-              </div>
+              <div className="text-2xl font-bold text-brand-chocolate">{stats.totalUsers}</div>
+              <p className="text-xs text-brand-chocolate-light">
+                <TrendingUp className="inline h-3 w-3 mr-1" />
+                +5% from last month
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recent Activity/Chart Placeholder */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-lg">Sales Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Chart would go here - using a placeholder */}
-              <div className="h-80 bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                  <TrendingUp className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">Sales chart will be displayed here</p>
-                </div>
+        {/* Product Management */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Product Management</CardTitle>
+                <CardDescription>Manage your product inventory</CardDescription>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Orders</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Order items would be dynamically generated - using placeholders */}
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center border-b pb-2">
-                    <div className="flex-grow">
-                      <p className="font-medium">Order #{10000 + i}</p>
-                      <p className="text-sm text-gray-500">2 hours ago</p>
-                    </div>
-                    <div>
-                      <span className="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                        Completed
-                      </span>
-                    </div>
-                  </div>
+              <Button className="bg-brand-gold hover:bg-brand-gold-dark text-brand-chocolate">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Inventory</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <img 
+                          src={product.images[0] || '/placeholder.svg'} 
+                          alt={product.name}
+                          className="h-10 w-10 rounded object-cover"
+                        />
+                        <span className="font-medium">{product.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{product.category}</TableCell>
+                    <TableCell>${product.price}</TableCell>
+                    <TableCell>{product.inventory}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={product.inventory > 0 ? "default" : "destructive"}
+                        className={product.inventory > 0 ? "bg-green-100 text-green-800" : ""}
+                      >
+                        {product.inventory > 0 ? 'In Stock' : 'Out of Stock'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleDeleteProduct(product.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
-                <button className="text-sm text-brand-purple hover:text-brand-purple-dark mt-2">
-                  View all orders
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Recent Orders */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Orders</CardTitle>
+            <CardDescription>Latest customer orders</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order ID</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>#ORD-001</TableCell>
+                  <TableCell>John Doe</TableCell>
+                  <TableCell>$129.99</TableCell>
+                  <TableCell>
+                    <Badge className="bg-blue-100 text-blue-800">Processing</Badge>
+                  </TableCell>
+                  <TableCell>{new Date().toLocaleDateString()}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>#ORD-002</TableCell>
+                  <TableCell>Jane Smith</TableCell>
+                  <TableCell>$89.99</TableCell>
+                  <TableCell>
+                    <Badge className="bg-green-100 text-green-800">Shipped</Badge>
+                  </TableCell>
+                  <TableCell>{new Date(Date.now() - 86400000).toLocaleDateString()}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );

@@ -1,124 +1,98 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import { CartProvider } from "./contexts/CartContext";
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { CartProvider } from '@/contexts/CartContext';
+import { Toaster } from '@/components/ui/sonner';
 
-// Pages
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import AdminLogin from "./pages/AdminLogin";
-import AdminRegister from "./pages/AdminRegister";
-import Dashboard from "./pages/Dashboard";
-import Orders from "./pages/dashboard/Orders";
-import Wishlist from "./pages/dashboard/Wishlist";
-import Addresses from "./pages/dashboard/Addresses";
-import PaymentMethods from "./pages/dashboard/PaymentMethods";
-import AccountSettings from "./pages/dashboard/AccountSettings";
-import AdminDashboard from "./pages/AdminDashboard";
-import Products from "./pages/Products";
-import ProductDetails from "./pages/ProductDetails";
-import Categories from "./pages/Categories";
-import Category from "./pages/Category";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import ThankYou from "./pages/ThankYou";
-import NewArrivals from "./pages/NewArrivals";
-import FeaturedProducts from "./pages/FeaturedProducts";
-import Sale from "./pages/Sale";
-import ContactUs from "./pages/ContactUs";
-import FAQ from "./pages/FAQ";
-import ShippingReturns from "./pages/ShippingReturns";
-import TermsConditions from "./pages/TermsConditions";
-import NotFound from "./pages/NotFound";
+// Lazy load components for code splitting
+const Index = lazy(() => import('@/pages/Index'));
+const Products = lazy(() => import('@/pages/Products'));
+const ProductDetails = lazy(() => import('@/pages/ProductDetails'));
+const Cart = lazy(() => import('@/pages/Cart'));
+const Checkout = lazy(() => import('@/pages/Checkout'));
+const ThankYou = lazy(() => import('@/pages/ThankYou'));
+const Categories = lazy(() => import('@/pages/Categories'));
+const Category = lazy(() => import('@/pages/Category'));
+const NewArrivals = lazy(() => import('@/pages/NewArrivals'));
+const FeaturedProducts = lazy(() => import('@/pages/FeaturedProducts'));
+const Sale = lazy(() => import('@/pages/Sale'));
+const ContactUs = lazy(() => import('@/pages/ContactUs'));
+const FAQ = lazy(() => import('@/pages/FAQ'));
+const ShippingReturns = lazy(() => import('@/pages/ShippingReturns'));
+const TermsConditions = lazy(() => import('@/pages/TermsConditions'));
+const Login = lazy(() => import('@/pages/Login'));
+const Register = lazy(() => import('@/pages/Register'));
+const AdminLogin = lazy(() => import('@/pages/AdminLogin'));
+const AdminRegister = lazy(() => import('@/pages/AdminRegister'));
+const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Orders = lazy(() => import('@/pages/dashboard/Orders'));
+const Wishlist = lazy(() => import('@/pages/dashboard/Wishlist'));
+const Addresses = lazy(() => import('@/pages/dashboard/Addresses'));
+const PaymentMethods = lazy(() => import('@/pages/dashboard/PaymentMethods'));
+const AccountSettings = lazy(() => import('@/pages/dashboard/AccountSettings'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
 
-// Auth required route component
-import { useAuth } from "./contexts/AuthContext";
+// Loading component
+const Loading = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-gold"></div>
+  </div>
+);
 
-const queryClient = new QueryClient();
-
-const RequireAuth = ({ children }: { children: React.ReactNode }) => {
-  const { currentUser, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
-  
-  if (!currentUser) {
-    return <Navigate to="/login" />;
-  }
-  
-  return <>{children}</>;
-};
-
-const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
-  const { userData, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
-  
-  if (!userData || userData.role !== 'admin') {
-    return <Navigate to="/dashboard" />;
-  }
-  
-  return <>{children}</>;
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+function App() {
+  return (
     <AuthProvider>
       <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin/register" element={<AdminRegister />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/:productId" element={<ProductDetails />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/categories/:categoryId" element={<Category />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/new-arrivals" element={<NewArrivals />} />
-              <Route path="/featured" element={<FeaturedProducts />} />
-              <Route path="/sale" element={<Sale />} />
-              <Route path="/contact" element={<ContactUs />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/shipping-returns" element={<ShippingReturns />} />
-              <Route path="/terms" element={<TermsConditions />} />
-              
-              {/* Protected customer routes */}
-              <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-              <Route path="/dashboard/orders" element={<RequireAuth><Orders /></RequireAuth>} />
-              <Route path="/dashboard/wishlist" element={<RequireAuth><Wishlist /></RequireAuth>} />
-              <Route path="/dashboard/addresses" element={<RequireAuth><Addresses /></RequireAuth>} />
-              <Route path="/dashboard/payment-methods" element={<RequireAuth><PaymentMethods /></RequireAuth>} />
-              <Route path="/dashboard/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
-              <Route path="/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
-              <Route path="/thank-you" element={<RequireAuth><ThankYou /></RequireAuth>} />
-              
-              {/* Protected admin routes */}
-              <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
-              <Route path="/admin/*" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <Router>
+          <div className="min-h-screen bg-brand-beige">
+            <Suspense fallback={<Loading />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/products/:productId" element={<ProductDetails />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/thank-you" element={<ThankYou />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/categories/:categoryId" element={<Category />} />
+                <Route path="/new-arrivals" element={<NewArrivals />} />
+                <Route path="/featured" element={<FeaturedProducts />} />
+                <Route path="/sale" element={<Sale />} />
+                <Route path="/contact" element={<ContactUs />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/shipping-returns" element={<ShippingReturns />} />
+                <Route path="/terms" element={<TermsConditions />} />
+                
+                {/* Auth Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin/register" element={<AdminRegister />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminDashboard />} />
+                
+                {/* Customer Dashboard Routes */}
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/orders" element={<Orders />} />
+                <Route path="/dashboard/wishlist" element={<Wishlist />} />
+                <Route path="/dashboard/addresses" element={<Addresses />} />
+                <Route path="/dashboard/payment-methods" element={<PaymentMethods />} />
+                <Route path="/dashboard/account-settings" element={<AccountSettings />} />
+                
+                {/* Catch all route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+            <Toaster />
+          </div>
+        </Router>
       </CartProvider>
     </AuthProvider>
-  </QueryClientProvider>
-);
+  );
+}
 
 export default App;

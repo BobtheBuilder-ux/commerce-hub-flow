@@ -27,9 +27,8 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginForm = () => {
-  const { signIn, signInWithMagicLink } = useAuth();
+  const { signIn } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isMagicLink, setIsMagicLink] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -46,15 +45,9 @@ const LoginForm = () => {
   const onSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
     try {
-      if (isMagicLink) {
-        const currentUrl = window.location.origin;
-        await signInWithMagicLink(data.email, currentUrl);
-        toast.success("Magic link sent! Check your email to sign in.");
-      } else {
-        await signIn(data.email, data.password);
-        toast.success("Signed in successfully!");
-        navigate(from, { replace: true });
-      }
+      await signIn(data.email, data.password);
+      toast.success("Signed in successfully!");
+      navigate(from, { replace: true });
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error(error.message || "Failed to sign in");
@@ -81,37 +74,25 @@ const LoginForm = () => {
             )}
           />
           
-          {!isMagicLink && (
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="******" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="******" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing In...' : isMagicLink ? 'Send Magic Link' : 'Sign In'}
+            {isSubmitting ? 'Signing In...' : 'Sign In'}
           </Button>
         </form>
       </Form>
-      
-      <div className="text-center">
-        <Button 
-          variant="link" 
-          onClick={() => setIsMagicLink(!isMagicLink)}
-          className="text-sm"
-        >
-          {isMagicLink ? 'Use password instead' : 'Use magic link instead'}
-        </Button>
-      </div>
     </div>
   );
 };
