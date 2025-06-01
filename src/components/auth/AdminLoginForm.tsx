@@ -31,7 +31,7 @@ const adminLoginSchema = z.object({
 type AdminLoginFormValues = z.infer<typeof adminLoginSchema>;
 
 const AdminLoginForm = () => {
-  const { signIn } = useAuth();
+  const { signIn, currentUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   
@@ -46,11 +46,11 @@ const AdminLoginForm = () => {
   const onSubmit = async (data: AdminLoginFormValues) => {
     setIsSubmitting(true);
     try {
-      const result = await signIn(data.email, data.password);
+      await signIn(data.email, data.password);
       
-      // Set user role to admin in Firestore
-      if (result && result.user) {
-        await setDoc(doc(db, 'users', result.user.uid), {
+      // Set user role to admin in Firestore - use currentUser from context
+      if (currentUser) {
+        await setDoc(doc(db, 'users', currentUser.uid), {
           role: 'admin'
         }, { merge: true });
       }
