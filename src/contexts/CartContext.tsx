@@ -1,198 +1,105 @@
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { Product } from '@/types';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { doc, setDoc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { CartItem, Product } from '../types';
-import { useAuth } from './AuthContext';
-import { toast } from '@/components/ui/sonner';
+interface CartItem {
+  productId: string;
+  quantity: number;
+}
 
 interface CartContextType {
-  items: CartItem[];
+  cartItems: CartItem[];
   addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  subtotal: number;
-  itemCount: number;
-  loading: boolean;
+  getCartTotal: () => number;
+  getCartItemsCount: () => number;
 }
 
-const CartContext = createContext<CartContextType | null>(null);
-
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
-};
+const CartContext = createContext<CartContextType | undefined>(undefined);
 
 interface CartProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
-const CART_STORAGE_KEY = 'ecommerce_cart';
-
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { currentUser } = useAuth();
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    const storedCart = localStorage.getItem('cart');
+    return storedCart ? JSON.parse(storedCart) : [];
+  });
 
-  // Calculate derived values
-  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const itemCount = items.reduce((count, item) => count + item.quantity, 0);
-
-  // Load cart data on initial load or when user changes
   useEffect(() => {
-    const loadCart = async () => {
-      setLoading(true);
-      try {
-        if (currentUser) {
-          // Fetch cart from Firestore for logged in users
-          try {
-            const cartDoc = await getDoc(doc(db, 'carts', currentUser.uid));
-            if (cartDoc.exists()) {
-              const cartData = cartDoc.data();
-              const cartItems: CartItem[] = cartData.items || [];
-              setItems(cartItems);
-            } else {
-              // New user, no cart yet
-              setItems([]);
-            }
-          } catch (firestoreError) {
-            console.warn("Firestore unavailable, using localStorage:", firestoreError);
-            // Fallback to localStorage if Firestore is unavailable
-            const storedCart = localStorage.getItem(CART_STORAGE_KEY);
-            if (storedCart) {
-              setItems(JSON.parse(storedCart));
-            } else {
-              setItems([]);
-            }
-          }
-        } else {
-          // Use localStorage for guest users
-          const storedCart = localStorage.getItem(CART_STORAGE_KEY);
-          if (storedCart) {
-            try {
-              setItems(JSON.parse(storedCart));
-            } catch (parseError) {
-              console.warn("Invalid cart data in localStorage, clearing:", parseError);
-              localStorage.removeItem(CART_STORAGE_KEY);
-              setItems([]);
-            }
-          } else {
-            setItems([]);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading cart:", error);
-        // Fallback to empty cart instead of showing error toast
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+  }, [cartItems]);
 
-    loadCart();
-  }, [currentUser]);
-
-  // Save cart when it changes
-  useEffect(() => {
-    const saveCart = async () => {
-      if (loading) return;
-
-      try {
-        if (currentUser) {
-          // Save to Firestore for logged in users
-          try {
-            await setDoc(doc(db, 'carts', currentUser.uid), {
-              items,
-              updatedAt: new Date(),
-            }, { merge: true });
-          } catch (firestoreError) {
-            console.warn("Firestore unavailable, using localStorage:", firestoreError);
-            // Fallback to localStorage if Firestore is unavailable
-            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-          }
-        } else {
-          // Save to localStorage for guest users
-          localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-        }
-      } catch (error) {
-        console.error("Error saving cart:", error);
-        // Still try to save to localStorage as fallback
-        try {
-          localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-        } catch (localStorageError) {
-          console.error("Failed to save to localStorage:", localStorageError);
-        }
-      }
-    };
-
-    saveCart();
-  }, [items, currentUser, loading]);
-
-  const addToCart = (product: Product, quantity = 1) => {
-    setItems(prevItems => {
+  const addToCart = (product: Product, quantity: number = 1) => {
+    setCartItems(prevItems => {
       const existingItemIndex = prevItems.findIndex(item => item.productId === product.id);
-      
-      if (existingItemIndex >= 0) {
-        // Update quantity if product is already in cart
-        const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex] = {
-          ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + quantity
-        };
-        return updatedItems;
+
+      if (existingItemIndex !== -1) {
+        const newItems = [...prevItems];
+        newItems[existingItemIndex].quantity += quantity;
+        return newItems;
       } else {
-        // Add new item to cart
-        return [...prevItems, {
-          productId: product.id,
-          product,
-          quantity,
-          price: product.salePrice || product.price
-        }];
+        return [...prevItems, { productId: product.id, quantity }];
       }
     });
-    
-    toast.success(`${product.name} added to cart`);
   };
 
   const removeFromCart = (productId: string) => {
-    setItems(prevItems => prevItems.filter(item => item.productId !== productId));
-    toast.success("Item removed from cart");
+    setCartItems(prevItems => prevItems.filter(item => item.productId !== productId));
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity < 1) {
-      removeFromCart(productId);
-      return;
-    }
-    
-    setItems(prevItems => 
-      prevItems.map(item => 
-        item.productId === productId ? { ...item, quantity } : item
-      )
-    );
+    setCartItems(prevItems => {
+      return prevItems.map(item => {
+        if (item.productId === productId) {
+          return { ...item, quantity: quantity };
+        }
+        return item;
+      });
+    });
   };
 
   const clearCart = () => {
-    setItems([]);
-    toast.success("Cart cleared");
+    setCartItems([]);
+    localStorage.removeItem('cart');
+  };
+
+  const getCartTotal = () => {
+    return cartItems.reduce((total, item) => {
+      return total + (item.quantity * (JSON.parse(localStorage.getItem('products') || '[]').find((p:Product) => p.id === item.productId)?.price || 0));
+    }, 0);
+  };
+
+  const getCartItemsCount = () => {
+    return cartItems.reduce((count, item) => count + item.quantity, 0);
+  };
+
+  const value: CartContextType = {
+    cartItems,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    getCartTotal,
+    getCartItemsCount
   };
 
   return (
-    <CartContext.Provider value={{
-      items,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      subtotal,
-      itemCount,
-      loading
-    }}>
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );
+};
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (context === undefined) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
 };
