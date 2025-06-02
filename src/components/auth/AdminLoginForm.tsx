@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { toast } from '@/components/ui/sonner';
 import { Shield } from 'lucide-react';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Separator } from '@/components/ui/separator';
 
@@ -43,6 +43,8 @@ const AdminLoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSignIn, setIsGoogleSignIn] = useState(false);
   const navigate = useNavigate();
+  
+  console.log('AdminLoginForm rendered');
   
   const form = useForm<AdminLoginFormValues>({
     resolver: zodResolver(adminLoginSchema),

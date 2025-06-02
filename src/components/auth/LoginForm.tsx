@@ -34,6 +34,8 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  console.log('LoginForm rendered');
+  
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
