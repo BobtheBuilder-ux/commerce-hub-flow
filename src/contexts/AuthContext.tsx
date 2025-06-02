@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   createUserWithEmailAndPassword,
@@ -30,7 +29,7 @@ interface AuthContextType {
   currentUser: FirebaseUser | null;
   userData: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, isAdmin?: boolean) => Promise<void>;
   signIn: (email: string, password: string) => Promise<FirebaseUser | null>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -103,7 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return emailToCheck ? ADMIN_EMAILS.includes(emailToCheck.toLowerCase()) : false;
   };
 
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = async (email: string, password: string, displayName: string, isAdminRegistration = false) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -111,8 +110,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Update the user's display name
       await updateProfile(user, { displayName });
       
-      // Determine role based on email
-      const role = isAdmin(email) ? 'admin' : 'customer';
+      // Determine role based on email and registration type
+      const role = (isAdminRegistration && isAdmin(email)) ? 'admin' : 'customer';
       
       // Store additional user data in Firestore
       const userData: User = {
@@ -127,6 +126,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUserData(userData);
       
       toast.success("Account created successfully!");
+      
+      // Navigate based on role
+      if (role === 'admin') {
+        // For admin users, we'll handle navigation in the component
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 1000);
+      }
     } catch (error: any) {
       console.error('Error signing up:', error);
       toast.error(error.message || "Failed to create account");
