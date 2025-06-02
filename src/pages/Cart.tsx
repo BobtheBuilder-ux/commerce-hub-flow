@@ -34,8 +34,7 @@ const Cart = () => {
       toast.error("Please sign in to checkout");
       navigate('/login');
     } else {
-      // TODO: Implement checkout
-      toast.success("Checkout feature coming soon!");
+      navigate('/checkout');
     }
   };
 

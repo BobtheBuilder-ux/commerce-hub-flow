@@ -26,6 +26,12 @@ const Register = lazy(() => import('@/pages/Register'));
 const AdminLogin = lazy(() => import('@/pages/AdminLogin'));
 const AdminRegister = lazy(() => import('@/pages/AdminRegister'));
 const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
+const AdminProducts = lazy(() => import('@/pages/admin/Products'));
+const AdminOrders = lazy(() => import('@/pages/admin/Orders'));
+const AdminCustomers = lazy(() => import('@/pages/admin/Customers'));
+const AdminAnalytics = lazy(() => import('@/pages/admin/Analytics'));
+const AdminPayments = lazy(() => import('@/pages/admin/Payments'));
+const AdminSettings = lazy(() => import('@/pages/admin/Settings'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Orders = lazy(() => import('@/pages/dashboard/Orders'));
 const Wishlist = lazy(() => import('@/pages/dashboard/Wishlist'));
@@ -74,6 +80,12 @@ function App() {
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/products" element={<AdminProducts />} />
+                <Route path="/admin/orders" element={<AdminOrders />} />
+                <Route path="/admin/customers" element={<AdminCustomers />} />
+                <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                <Route path="/admin/payments" element={<AdminPayments />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
                 
                 {/* Customer Dashboard Routes */}
                 <Route path="/dashboard" element={<Dashboard />} />
