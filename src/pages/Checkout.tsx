@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
@@ -10,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { PayPalScriptProvider } from '@paypal/react-paypal-js';
+import { PayPalScriptProvider, ReactPayPalScriptOptions } from '@paypal/react-paypal-js';
 import { toast } from '@/components/ui/sonner';
 
 const Checkout = () => {
@@ -76,13 +75,13 @@ const Checkout = () => {
     return null;
   }
 
-  // PayPal sandbox configuration
-  const paypalOptions = {
-    clientId: "AYGe6HHa2zKYtGBjx2SN3KJ4uw7wz1E7g_XZ8J4Dx7iT8G_2mM3vQ5fU8nI9pLnR", // Sandbox test client ID
+  // PayPal sandbox configuration with proper typing
+  const paypalOptions: ReactPayPalScriptOptions = {
+    clientId: "AYGe6HHa2zKYtGBjx2SN3KJ4uw7wz1E7g_XZ8J4Dx7iT8G_2mM3vQ5fU8nI9pLnR",
     currency: "USD",
     intent: "capture",
-    environment: "sandbox", // Use sandbox environment for testing
-    "disable-funding": "credit,card", // Only show PayPal option
+    environment: "sandbox" as const,
+    "disable-funding": "credit,card",
     "data-page-type": "checkout",
     components: "buttons,marks"
   };
