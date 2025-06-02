@@ -125,4 +125,18 @@
   .gold-gradient {
     background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
   }
+
+  /* Float animation */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
 }

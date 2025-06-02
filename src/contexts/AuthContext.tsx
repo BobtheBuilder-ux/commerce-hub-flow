@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   createUserWithEmailAndPassword,
@@ -18,16 +19,24 @@ import { auth, db } from '../lib/firebase';
 import { User } from '../types';
 import { toast } from '@/components/ui/sonner';
 
+// Admin emails list - in a real app, this would be stored securely in the backend
+const ADMIN_EMAILS = [
+  'admin@shophub.com',
+  'manager@shophub.com',
+  'support@shophub.com'
+];
+
 interface AuthContextType {
   currentUser: FirebaseUser | null;
   userData: User | null;
   loading: boolean;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<FirebaseUser | null>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   sendPasswordlessSignIn: (email: string) => Promise<void>;
   completePasswordlessSignIn: (email: string, linkUrl: string) => Promise<void>;
+  isAdmin: (email?: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -65,7 +74,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
-            setUserData(userDoc.data() as User);
+            const existingUserData = userDoc.data() as User;
+            
+            // Check if user should be admin and update role if necessary
+            if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()) && existingUserData.role !== 'admin') {
+              const updatedUserData = { ...existingUserData, role: 'admin' as const };
+              await setDoc(userDocRef, updatedUserData);
+              setUserData(updatedUserData);
+            } else {
+              setUserData(existingUserData);
+            }
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -80,6 +98,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return unsubscribe;
   }, []);
 
+  const isAdmin = (email?: string): boolean => {
+    const emailToCheck = email || currentUser?.email || userData?.email;
+    return emailToCheck ? ADMIN_EMAILS.includes(emailToCheck.toLowerCase()) : false;
+  };
+
   const signUp = async (email: string, password: string, displayName: string) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -88,12 +111,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Update the user's display name
       await updateProfile(user, { displayName });
       
+      // Determine role based on email
+      const role = isAdmin(email) ? 'admin' : 'customer';
+      
       // Store additional user data in Firestore
       const userData: User = {
         uid: user.uid,
         email: user.email || '',
         displayName,
-        role: 'customer',
+        role,
         createdAt: Date.now(),
       };
       
@@ -108,10 +134,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<FirebaseUser | null> => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Update user role if they're an admin
+      if (isAdmin(email)) {
+        await setDoc(doc(db, 'users', user.uid), {
+          role: 'admin'
+        }, { merge: true });
+      }
+      
       toast.success("Signed in successfully!");
+      return user;
     } catch (error: any) {
       console.error('Error signing in:', error);
       toast.error(error.message || "Failed to sign in");
@@ -137,6 +173,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
+      // Determine role based on email
+      const role = isAdmin(user.email) ? 'admin' : 'customer';
+      
       // Check if user already exists in Firestore
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
@@ -147,11 +186,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           uid: user.uid,
           email: user.email || '',
           displayName: user.displayName || 'Google User',
-          role: 'customer',
+          role,
           createdAt: Date.now(),
         };
         
         await setDoc(userDocRef, userData);
+      } else {
+        // Update existing user role if they're an admin
+        if (role === 'admin') {
+          await setDoc(userDocRef, { role }, { merge: true });
+        }
       }
       
       toast.success("Signed in with Google successfully!");
@@ -188,6 +232,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Remove email from storage
         window.localStorage.removeItem('emailForSignIn');
         
+        // Determine role based on email
+        const role = isAdmin(email) ? 'admin' : 'customer';
+        
         // Check if user already exists in Firestore
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
@@ -198,11 +245,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             uid: user.uid,
             email: user.email || '',
             displayName: email.split('@')[0], // Simple display name from email
-            role: 'customer',
+            role,
             createdAt: Date.now(),
           };
           
           await setDoc(userDocRef, userData);
+        } else if (role === 'admin') {
+          // Update existing user role if they're an admin
+          await setDoc(userDocRef, { role }, { merge: true });
         }
         
         toast.success("Signed in successfully!");
@@ -223,7 +273,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signOut,
     signInWithGoogle,
     sendPasswordlessSignIn,
-    completePasswordlessSignIn
+    completePasswordlessSignIn,
+    isAdmin
   };
 
   return (

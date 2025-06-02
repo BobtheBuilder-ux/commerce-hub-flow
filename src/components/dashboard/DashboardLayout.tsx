@@ -53,7 +53,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) =>
     },
     {
       name: 'Account Settings',
-      href: '/dashboard/settings',
+      href: '/dashboard/account-settings',
       icon: <Settings className="h-5 w-5" />,
     },
   ];
