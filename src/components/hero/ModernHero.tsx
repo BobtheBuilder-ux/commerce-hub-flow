@@ -1,12 +1,9 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ShoppingCart, Star, Zap, TrendingUp } from 'lucide-react';
-
 const ModernHero = () => {
-  return (
-    <section className="relative min-h-screen bg-gradient-to-br from-brand-chocolate via-brand-bronze to-brand-chocolate-dark overflow-hidden">
+  return <section className="relative min-h-screen bg-gradient-to-br from-brand-chocolate via-brand-bronze to-brand-chocolate-dark overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-32 h-32 bg-brand-gold/20 rounded-full blur-xl animate-pulse"></div>
@@ -88,7 +85,7 @@ const ModernHero = () => {
                 </Button>
               </Link>
               <Link to="/products?category=Electronics">
-                <Button size="lg" variant="outline" className="border-2 border-brand-beige hover:bg-brand-beige hover:text-brand-chocolate text-brand-beige font-bold px-10 py-4 rounded-xl text-lg backdrop-blur-sm hover:scale-105 transition-all duration-300">
+                <Button size="lg" variant="outline" className="border-2 border-brand-beige hover:bg-brand-beige hover:text-brand-chocolate text-black font-bold px-10 py-4 rounded-xl text-lg backdrop-blur-sm hover:scale-105 transition-all duration-300">
                   <Zap className="mr-2 h-5 w-5" />
                   Explore Tech
                 </Button>
@@ -120,11 +117,7 @@ const ModernHero = () => {
             <div className="relative z-20">
               <div className="w-full h-96 lg:h-[500px] bg-gradient-to-br from-brand-beige/30 to-brand-gold/20 rounded-3xl backdrop-blur-sm border border-brand-gold/30 flex items-center justify-center overflow-hidden shadow-2xl hover:shadow-brand-gold/30 transition-all duration-500 hover:scale-105">
                 <div className="relative">
-                  <img 
-                    src="/placeholder.svg" 
-                    alt="Featured Product" 
-                    className="w-80 h-80 object-cover rounded-2xl shadow-2xl transform hover:scale-110 transition-transform duration-500" 
-                  />
+                  <img src="/placeholder.svg" alt="Featured Product" className="w-80 h-80 object-cover rounded-2xl shadow-2xl transform hover:scale-110 transition-transform duration-500" />
                   <div className="absolute -top-4 -right-4 bg-brand-gold text-brand-chocolate px-3 py-1 rounded-full text-sm font-bold animate-bounce">
                     NEW!
                   </div>
@@ -140,11 +133,7 @@ const ModernHero = () => {
             <div className="absolute top-8 -right-8 lg:right-8 bg-brand-beige/20 backdrop-blur-md rounded-2xl p-6 border border-brand-gold/30 w-64 animate-slide-in-right">
               <h4 className="text-brand-cream font-bold text-lg mb-2">Premium Selection</h4>
               <div className="w-full h-32 bg-gradient-to-br from-brand-gold/40 to-brand-bronze/30 rounded-xl mb-4 flex items-center justify-center">
-                <img 
-                  src="/placeholder.svg" 
-                  alt="Premium Product" 
-                  className="w-24 h-24 object-cover rounded-lg" 
-                />
+                <img src="/placeholder.svg" alt="Premium Product" className="w-24 h-24 object-cover rounded-lg" />
               </div>
               <div className="flex justify-between items-center text-brand-beige/80 text-sm">
                 <span className="flex items-center">
@@ -158,11 +147,7 @@ const ModernHero = () => {
             <div className="absolute bottom-8 -left-8 lg:left-8 bg-brand-chocolate/20 backdrop-blur-md rounded-2xl p-6 border border-brand-gold/30 w-64 animate-slide-in-right">
               <h4 className="text-brand-cream font-bold text-lg mb-2">Best Sellers</h4>
               <div className="w-full h-32 bg-gradient-to-br from-brand-bronze/40 to-brand-gold/30 rounded-xl mb-4 flex items-center justify-center">
-                <img 
-                  src="/placeholder.svg" 
-                  alt="Best Seller" 
-                  className="w-24 h-24 object-cover rounded-lg" 
-                />
+                <img src="/placeholder.svg" alt="Best Seller" className="w-24 h-24 object-cover rounded-lg" />
               </div>
               <div className="flex justify-between items-center text-brand-beige/80 text-sm">
                 <span className="flex items-center">
@@ -183,8 +168,6 @@ const ModernHero = () => {
           <div className="w-4 h-1 bg-brand-beige/50 rounded-full hover:bg-brand-beige transition-colors cursor-pointer"></div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default ModernHero;
