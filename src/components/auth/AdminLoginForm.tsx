@@ -65,10 +65,10 @@ const AdminLoginForm = () => {
   const onSubmit = async (data: AdminLoginFormValues) => {
     setIsSubmitting(true);
     try {
-      const userCredential = await signIn(data.email, data.password);
+      const user = await signIn(data.email, data.password);
       
       // Check if user is admin and set role
-      const isAdmin = await setUserAsAdmin(data.email, userCredential?.user?.uid || '');
+      const isAdmin = await setUserAsAdmin(data.email, user?.uid || '');
       
       if (isAdmin) {
         toast.success("Signed in as admin successfully!");
