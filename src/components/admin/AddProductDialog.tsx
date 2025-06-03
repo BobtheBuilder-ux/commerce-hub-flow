@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { addProduct } from '@/services/adminProductService';
-import { fetchDummyJSONCategories } from '@/services/dummyJsonService';
 import { ProductVariation } from '@/types';
 import { Plus, Trash2 } from 'lucide-react';
 
@@ -51,10 +50,24 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const categoriesData = await fetchDummyJSONCategories();
-        setCategories(categoriesData);
+        // Use mock categories instead of fetching from external API to avoid errors
+        const mockCategories = [
+          'electronics',
+          'clothing',
+          'home-kitchen',
+          'fitness',
+          'books',
+          'beauty',
+          'sports',
+          'toys',
+          'automotive',
+          'jewelry'
+        ];
+        setCategories(mockCategories);
       } catch (error) {
         console.error('Error fetching categories:', error);
+        // Fallback to default categories
+        setCategories(['electronics', 'clothing', 'home-kitchen', 'fitness', 'books']);
       }
     };
 
@@ -214,11 +227,17 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category.charAt(0).toUpperCase() + category.slice(1)}
-                          </SelectItem>
-                        ))}
+                        {categories.map((category) => {
+                          // Ensure category is a string and handle any non-string values
+                          const categoryStr = typeof category === 'string' ? category : String(category);
+                          const displayName = categoryStr.charAt(0).toUpperCase() + categoryStr.slice(1).replace('-', ' ');
+                          
+                          return (
+                            <SelectItem key={categoryStr} value={categoryStr}>
+                              {displayName}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
