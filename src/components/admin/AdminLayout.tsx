@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation, Navigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -16,7 +15,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   title
 }) => {
   const location = useLocation();
-  const { userData, logout } = useAuth();
+  const { userData, signOut } = useAuth();
 
   // Redirect if not admin
   if (userData && userData.role !== 'admin') {
@@ -25,7 +24,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const handleSignOut = async () => {
     try {
-      await logout();
+      await signOut();
     } catch (error) {
       console.error('Error signing out:', error);
     }
