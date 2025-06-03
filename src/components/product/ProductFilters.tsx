@@ -80,7 +80,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((category) => (
+              {categories.filter(category => typeof category === 'string' && category.length > 0).map((category) => (
                 <SelectItem key={category} value={category}>
                   {category.charAt(0).toUpperCase() + category.slice(1)}
                 </SelectItem>

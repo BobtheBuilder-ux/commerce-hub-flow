@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import ProductGrid from '../ProductGrid';
 import { Product } from '@/types';
+import { describe, it, expect } from 'vitest';
 
 const mockProducts: Product[] = [
   {
