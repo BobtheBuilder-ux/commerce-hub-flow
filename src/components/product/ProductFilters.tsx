@@ -37,6 +37,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   onClearFilters,
   hasActiveFilters
 }) => {
+  const handleCategoryChange = (value: string) => {
+    if (value === "all") {
+      setSelectedCategories([]);
+    } else {
+      setSelectedCategories([value]);
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md border border-brand-beige-dark">
       <h3 className="text-lg font-semibold text-brand-chocolate mb-4">Filters</h3>
@@ -62,14 +70,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         <div>
           <label className="block text-sm font-medium text-brand-chocolate mb-2">Category</label>
           <Select 
-            value={selectedCategories[0] || ''} 
-            onValueChange={(value) => setSelectedCategories(value ? [value] : [])}
+            value={selectedCategories.length > 0 ? selectedCategories[0] : 'all'} 
+            onValueChange={handleCategoryChange}
           >
             <SelectTrigger className="border-brand-beige-dark">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               <SelectItem value="electronics">Electronics</SelectItem>
               <SelectItem value="clothing">Clothing</SelectItem>
               <SelectItem value="home-kitchen">Home & Kitchen</SelectItem>
