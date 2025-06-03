@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,15 +21,10 @@ const Categories = () => {
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const categoriesSnapshot = await getDocs(collection(db, 'categories'));
-        const categoriesData: Category[] = [];
-        categoriesSnapshot.forEach((doc) => {
-          categoriesData.push({ id: doc.id, ...doc.data() } as Category);
-        });
-        setCategories(categoriesData);
+        // Use sample data instead of Firebase for now
+        setCategories(sampleCategories);
       } catch (error) {
         console.error('Error fetching categories:', error);
-        // Fallback to sample data
         setCategories(sampleCategories);
       } finally {
         setIsLoading(false);

@@ -28,13 +28,19 @@ const Products = () => {
           fetchDummyJSONCategories()
         ]);
         
+        // Ensure categories is always an array of strings
+        const validCategories = Array.isArray(categoriesData) 
+          ? categoriesData.filter(cat => typeof cat === 'string')
+          : [];
+        
         setProducts(productsData);
         setFilteredProducts(productsData);
-        setCategories(categoriesData);
+        setCategories(validCategories);
       } catch (error) {
         console.error('Error fetching data:', error);
         setProducts([]);
         setFilteredProducts([]);
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }
@@ -49,7 +55,7 @@ const Products = () => {
     // Apply category filter
     if (selectedCategories.length > 0) {
       filtered = filtered.filter(product => 
-        selectedCategories.includes(product.category)
+        product.category && selectedCategories.includes(product.category)
       );
     }
 

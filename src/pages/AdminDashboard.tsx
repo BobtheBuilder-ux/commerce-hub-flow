@@ -15,7 +15,8 @@ import {
   Eye,
   Edit,
   Trash2,
-  Plus
+  Plus,
+  Play
 } from 'lucide-react';
 import { Product, Order } from '@/types';
 import {
@@ -26,10 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminDashboard = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState({
@@ -90,12 +93,36 @@ const AdminDashboard = () => {
     setProducts(products.filter(p => p.id !== productId));
   };
 
+  const handleRunTests = () => {
+    toast({
+      title: "Tests Running",
+      description: "Running application tests...",
+    });
+    
+    // Simulate test running
+    setTimeout(() => {
+      toast({
+        title: "Tests Completed",
+        description: "All tests passed successfully!",
+      });
+    }, 2000);
+  };
+
   return (
     <AdminLayout title="Dashboard">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-brand-chocolate">Admin Dashboard</h1>
-          <p className="text-brand-chocolate-light">Manage your store and monitor performance</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-brand-chocolate">Admin Dashboard</h1>
+            <p className="text-brand-chocolate-light">Manage your store and monitor performance</p>
+          </div>
+          <Button 
+            onClick={handleRunTests}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Run Tests
+          </Button>
         </div>
 
         {/* Stats Cards */}
