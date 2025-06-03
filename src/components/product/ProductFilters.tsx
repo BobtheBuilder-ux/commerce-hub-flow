@@ -23,6 +23,7 @@ interface ProductFiltersProps {
   setShowOnlyInStock: (value: boolean) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
+  categories?: string[];
 }
 
 const ProductFilters: React.FC<ProductFiltersProps> = ({
@@ -35,7 +36,8 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   showOnlyInStock,
   setShowOnlyInStock,
   onClearFilters,
-  hasActiveFilters
+  hasActiveFilters,
+  categories = []
 }) => {
   const handleCategoryChange = (value: string) => {
     if (value === "all") {
@@ -78,12 +80,11 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="electronics">Electronics</SelectItem>
-              <SelectItem value="clothing">Clothing</SelectItem>
-              <SelectItem value="home-kitchen">Home & Kitchen</SelectItem>
-              <SelectItem value="fitness">Fitness</SelectItem>
-              <SelectItem value="food">Food</SelectItem>
-              <SelectItem value="jewelry">Jewelry</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

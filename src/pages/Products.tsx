@@ -1,14 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
-import { getProducts } from '@/services/adminProductService';
 import { Product } from '@/types';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ProductGrid from '@/components/product/ProductGrid';
 import ProductFilters from '@/components/product/ProductFilters';
+import { fetchDummyJSONProducts, fetchDummyJSONCategories } from '@/services/dummyJsonService';
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Filter states
@@ -18,14 +20,19 @@ const Products = () => {
   const [showOnlyInStock, setShowOnlyInStock] = useState(false);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const productsList = await getProducts();
-        setProducts(productsList);
-        setFilteredProducts(productsList);
+        const [productsData, categoriesData] = await Promise.all([
+          fetchDummyJSONProducts(100),
+          fetchDummyJSONCategories()
+        ]);
+        
+        setProducts(productsData);
+        setFilteredProducts(productsData);
+        setCategories(categoriesData);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching data:', error);
         setProducts([]);
         setFilteredProducts([]);
       } finally {
@@ -33,7 +40,7 @@ const Products = () => {
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -107,6 +114,7 @@ const Products = () => {
               setShowOnlyInStock={setShowOnlyInStock}
               onClearFilters={handleClearFilters}
               hasActiveFilters={hasActiveFilters}
+              categories={categories}
             />
           </div>
           
@@ -121,7 +129,7 @@ const Products = () => {
             
             {isLoading ? (
               <div className="flex justify-center items-center py-20">
-                <p>Loading products...</p>
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-brand-chocolate"></div>
               </div>
             ) : filteredProducts.length > 0 ? (
               <ProductGrid products={filteredProducts} />

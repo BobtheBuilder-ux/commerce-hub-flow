@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,8 +17,9 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { addProduct } from '@/services/adminProductService';
+import { fetchDummyJSONCategories } from '@/services/dummyJsonService';
 import { ProductVariation } from '@/types';
-import { Plus, Trash2, Upload } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface AddProductDialogProps {
   open: boolean;
@@ -43,8 +44,24 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [videoFiles, setVideoFiles] = useState<File[]>([]);
   const [variations, setVariations] = useState<Omit<ProductVariation, 'id'>[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categoriesData = await fetchDummyJSONCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    if (open) {
+      fetchCategories();
+    }
+  }, [open]);
 
   const addVariation = () => {
     setVariations([...variations, { name: '', value: '', price: 0, inventory: 0 }]);
@@ -119,6 +136,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       onProductAdded();
       onOpenChange(false);
     } catch (error) {
+      console.error('Error adding product:', error);
       toast({
         title: "Error",
         description: "Failed to add product",
@@ -196,11 +214,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Electronics">Electronics</SelectItem>
-                        <SelectItem value="Clothing">Clothing</SelectItem>
-                        <SelectItem value="Books">Books</SelectItem>
-                        <SelectItem value="Home">Home</SelectItem>
-                        <SelectItem value="Sports">Sports</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category.charAt(0).toUpperCase() + category.slice(1)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

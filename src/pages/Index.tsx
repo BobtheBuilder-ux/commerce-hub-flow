@@ -1,7 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Product } from '@/types';
 import ProductGrid from '@/components/product/ProductGrid';
 import ModernHero from '@/components/hero/ModernHero';
@@ -9,23 +8,30 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Star, ShoppingCart, Users } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { fetchDummyJSONProducts, fetchDummyJSONCategories } from '@/services/dummyJsonService';
 
 const Index = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
       try {
-        // Use sample data for demonstration
-        setFeaturedProducts(sampleProducts.filter(p => p.featured).slice(0, 4));
-        setNewArrivals(sampleProducts.slice(0, 8));
+        const [products, categoriesData] = await Promise.all([
+          fetchDummyJSONProducts(50),
+          fetchDummyJSONCategories()
+        ]);
+        
+        setFeaturedProducts(products.filter(p => p.featured).slice(0, 4));
+        setNewArrivals(products.slice(0, 8));
+        setCategories(categoriesData.slice(0, 4));
       } catch (error) {
         console.error('Error fetching products:', error);
-        setFeaturedProducts(sampleProducts.filter(p => p.featured).slice(0, 4));
-        setNewArrivals(sampleProducts.slice(0, 8));
+        setFeaturedProducts([]);
+        setNewArrivals([]);
       } finally {
         setIsLoading(false);
       }
@@ -81,7 +87,7 @@ const Index = () => {
             </div>
             <ProductGrid products={featuredProducts} isLoading={isLoading} />
             <div className="text-center mt-12">
-              <Link to="/products?featured=true">
+              <Link to="/products">
                 <Button className="bg-brand-chocolate hover:bg-brand-chocolate-dark text-white font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                   View All Featured Products
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -100,15 +106,17 @@ const Index = () => {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {categories.map(category => (
-                <Link key={category.id} to={`/categories/${category.id}`} className="group">
+                <Link key={category} to={`/products?category=${category}`} className="group">
                   <div className="relative rounded-xl overflow-hidden bg-white shadow-lg h-48 md:h-64 border border-brand-beige-dark">
                     <img 
-                      src={category.image || "/placeholder.svg"} 
-                      alt={category.name} 
+                      src="/placeholder.svg" 
+                      alt={category} 
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-brand-chocolate via-transparent to-transparent opacity-80 flex items-end justify-center p-4 transition-opacity duration-300 group-hover:opacity-90">
-                      <h3 className="text-white text-xl md:text-2xl font-bold text-center">{category.name}</h3>
+                      <h3 className="text-white text-xl md:text-2xl font-bold text-center">
+                        {category.charAt(0).toUpperCase() + category.slice(1)}
+                      </h3>
                     </div>
                   </div>
                 </Link>
@@ -128,7 +136,7 @@ const Index = () => {
             </div>
             <ProductGrid products={newArrivals} isLoading={isLoading} />
             <div className="text-center mt-12">
-              <Link to="/new-arrivals">
+              <Link to="/products">
                 <Button className="bg-brand-gold hover:bg-brand-gold-dark text-brand-chocolate font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                   View All New Arrivals
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -164,148 +172,5 @@ const Index = () => {
     </div>
   );
 };
-
-// Sample data for demonstration
-const sampleProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Premium Wireless Headphones',
-    description: 'High-quality wireless headphones with noise cancellation',
-    price: 89.99,
-    salePrice: 69.99,
-    images: ['/placeholder.svg'],
-    category: 'Electronics',
-    inventory: 23,
-    featured: true,
-    averageRating: 4.5,
-    reviews: [],
-    createdAt: Date.now() - 1000000,
-    updatedAt: Date.now() - 500000
-  },
-  {
-    id: '2',
-    name: 'Smart Fitness Tracker',
-    description: 'Track your health and fitness goals with this smart device',
-    price: 59.99,
-    images: ['/placeholder.svg'],
-    category: 'Electronics',
-    inventory: 15,
-    featured: true,
-    averageRating: 4.2,
-    reviews: [],
-    createdAt: Date.now() - 2000000,
-    updatedAt: Date.now() - 1000000
-  },
-  {
-    id: '3',
-    name: 'Organic Cotton T-Shirt',
-    description: 'Comfortable and eco-friendly cotton t-shirt',
-    price: 24.99,
-    salePrice: 19.99,
-    images: ['/placeholder.svg'],
-    category: 'Clothing',
-    inventory: 50,
-    featured: false,
-    averageRating: 4.0,
-    reviews: [],
-    createdAt: Date.now() - 3000000,
-    updatedAt: Date.now() - 1500000
-  },
-  {
-    id: '4',
-    name: 'Stainless Steel Water Bottle',
-    description: 'Eco-friendly and durable water bottle',
-    price: 19.99,
-    images: ['/placeholder.svg'],
-    category: 'Home & Kitchen',
-    inventory: 35,
-    featured: true,
-    averageRating: 4.8,
-    reviews: [],
-    createdAt: Date.now() - 4000000,
-    updatedAt: Date.now() - 2000000
-  },
-  {
-    id: '5',
-    name: 'Yoga Mat',
-    description: 'Non-slip eco-friendly yoga mat',
-    price: 29.99,
-    images: ['/placeholder.svg'],
-    category: 'Fitness',
-    inventory: 20,
-    featured: false,
-    averageRating: 4.3,
-    reviews: [],
-    createdAt: Date.now() - 5000000,
-    updatedAt: Date.now() - 3000000
-  },
-  {
-    id: '6',
-    name: 'Coffee Maker',
-    description: 'Automatic drip coffee maker with timer',
-    price: 49.99,
-    salePrice: 39.99,
-    images: ['/placeholder.svg'],
-    category: 'Home & Kitchen',
-    inventory: 12,
-    featured: true,
-    averageRating: 4.1,
-    reviews: [],
-    createdAt: Date.now() - 6000000,
-    updatedAt: Date.now() - 3500000
-  },
-  {
-    id: '7',
-    name: 'Laptop Backpack',
-    description: 'Waterproof backpack with laptop compartment',
-    price: 39.99,
-    images: ['/placeholder.svg'],
-    category: 'Bags',
-    inventory: 18,
-    featured: false,
-    averageRating: 4.7,
-    reviews: [],
-    createdAt: Date.now() - 7000000,
-    updatedAt: Date.now() - 4000000
-  },
-  {
-    id: '8',
-    name: 'Smartphone Case',
-    description: 'Protective case for latest smartphone models',
-    price: 14.99,
-    salePrice: 9.99,
-    images: ['/placeholder.svg'],
-    category: 'Electronics',
-    inventory: 40,
-    featured: false,
-    averageRating: 4.0,
-    reviews: [],
-    createdAt: Date.now() - 8000000,
-    updatedAt: Date.now() - 4500000
-  }
-];
-
-const categories = [
-  {
-    id: 'electronics',
-    name: 'Electronics',
-    image: '/placeholder.svg'
-  },
-  {
-    id: 'clothing',
-    name: 'Clothing',
-    image: '/placeholder.svg'
-  },
-  {
-    id: 'home-kitchen',
-    name: 'Home & Kitchen',
-    image: '/placeholder.svg'
-  },
-  {
-    id: 'fitness',
-    name: 'Fitness',
-    image: '/placeholder.svg'
-  }
-];
 
 export default Index;
