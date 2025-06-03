@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Product } from '@/types';
 import ProductGrid from '@/components/product/ProductGrid';
 import ModernHero from '@/components/hero/ModernHero';
+import ShopByCategory from '@/components/category/ShopByCategory';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Star, ShoppingCart, Users } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
@@ -51,6 +52,9 @@ const Index = () => {
       <main className="flex-grow">
         {/* Modern Hero Section */}
         <ModernHero />
+
+        {/* Shop by Category Section */}
+        <ShopByCategory />
 
         {/* Features Section */}
         <section className="py-16 bg-gradient-to-br from-brand-beige-light to-brand-cream">
