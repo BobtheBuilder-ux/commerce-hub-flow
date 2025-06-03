@@ -35,6 +35,14 @@ export interface PaymentMethod {
 }
 
 // Product types
+export interface ProductVariation {
+  id: string;
+  name: string;
+  value: string;
+  price?: number;
+  inventory?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -42,12 +50,14 @@ export interface Product {
   price: number;
   salePrice?: number;
   images: string[];
+  videos?: string[];
   category: string;
   subcategory?: string;
   inventory: number;
   featured: boolean;
   averageRating?: number;
   reviews: ProductReview[];
+  variations?: ProductVariation[];
   createdAt: number;
   updatedAt: number;
 }
@@ -59,6 +69,7 @@ export interface ProductReview {
   userName: string;
   rating: number;
   comment: string;
+  verified: boolean;
   createdAt: number;
 }
 
@@ -76,6 +87,7 @@ export interface CartItem {
   product?: Product;
   quantity: number;
   price: number;
+  variationId?: string;
 }
 
 export interface Order {

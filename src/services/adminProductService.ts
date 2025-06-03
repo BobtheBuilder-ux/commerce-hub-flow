@@ -17,20 +17,41 @@ import {
 import { db, storage } from '@/lib/firebase';
 import { Product } from '@/types';
 
-export const addProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>, imageFile?: File) => {
+export const addProduct = async (
+  productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>, 
+  imageFiles: File[] = [], 
+  videoFiles: File[] = []
+) => {
   try {
-    let imageUrl = '/placeholder.svg';
+    let imageUrls: string[] = [];
+    let videoUrls: string[] = [];
     
-    // Upload image if provided
-    if (imageFile) {
-      const imageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
-      const snapshot = await uploadBytes(imageRef, imageFile);
-      imageUrl = await getDownloadURL(snapshot.ref);
+    // Upload images
+    if (imageFiles.length > 0) {
+      for (const file of imageFiles) {
+        const imageRef = ref(storage, `products/images/${Date.now()}_${file.name}`);
+        const snapshot = await uploadBytes(imageRef, file);
+        const url = await getDownloadURL(snapshot.ref);
+        imageUrls.push(url);
+      }
+    } else {
+      imageUrls = ['/placeholder.svg'];
+    }
+
+    // Upload videos
+    if (videoFiles.length > 0) {
+      for (const file of videoFiles) {
+        const videoRef = ref(storage, `products/videos/${Date.now()}_${file.name}`);
+        const snapshot = await uploadBytes(videoRef, file);
+        const url = await getDownloadURL(snapshot.ref);
+        videoUrls.push(url);
+      }
     }
 
     const product = {
       ...productData,
-      images: [imageUrl],
+      images: imageUrls,
+      videos: videoUrls,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       reviews: []

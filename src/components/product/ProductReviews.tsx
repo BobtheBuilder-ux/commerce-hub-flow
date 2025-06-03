@@ -1,12 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product, ProductReview } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Star, User } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { Badge } from '@/components/ui/badge';
+import { Star, User, ShieldCheck } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { checkUserPurchasedProduct, addProductReview } from '@/services/reviewService';
 
 interface ProductReviewsProps {
   product: Product;
@@ -15,40 +17,86 @@ interface ProductReviewsProps {
 
 const ProductReviews: React.FC<ProductReviewsProps> = ({ product, onReviewAdded }) => {
   const { currentUser } = useAuth();
+  const { toast } = useToast();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [canReview, setCanReview] = useState(false);
+  const [checkingPurchase, setCheckingPurchase] = useState(false);
+
+  useEffect(() => {
+    const checkPurchaseStatus = async () => {
+      if (!currentUser) return;
+      
+      setCheckingPurchase(true);
+      try {
+        const hasPurchased = await checkUserPurchasedProduct(currentUser.uid, product.id);
+        setCanReview(hasPurchased);
+      } catch (error) {
+        console.error('Error checking purchase status:', error);
+      } finally {
+        setCheckingPurchase(false);
+      }
+    };
+
+    checkPurchaseStatus();
+  }, [currentUser, product.id]);
 
   const handleSubmitReview = async () => {
     if (!currentUser) {
-      toast.error('Please sign in to leave a review');
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to leave a review",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!canReview) {
+      toast({
+        title: "Purchase Required",
+        description: "You can only review products you have purchased",
+        variant: "destructive"
+      });
       return;
     }
 
     if (rating === 0) {
-      toast.error('Please select a rating');
+      toast({
+        title: "Rating Required",
+        description: "Please select a rating",
+        variant: "destructive"
+      });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const newReview: ProductReview = {
-        id: Date.now().toString(),
+      const newReview: Omit<ProductReview, 'id'> = {
         productId: product.id,
         userId: currentUser.uid,
         userName: currentUser.displayName || 'Anonymous',
         rating,
         comment,
+        verified: true,
         createdAt: Date.now()
       };
 
-      onReviewAdded(newReview);
+      const addedReview = await addProductReview(newReview);
+      onReviewAdded(addedReview);
       setRating(0);
       setComment('');
-      toast.success('Review submitted successfully!');
+      toast({
+        title: "Success",
+        description: "Review submitted successfully!"
+      });
     } catch (error) {
       console.error('Error submitting review:', error);
-      toast.error('Failed to submit review');
+      toast({
+        title: "Error",
+        description: "Failed to submit review",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -61,6 +109,16 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ product, onReviewAdded 
         <Card>
           <CardHeader>
             <CardTitle>Write a Review</CardTitle>
+            {checkingPurchase ? (
+              <p className="text-sm text-gray-500">Checking purchase history...</p>
+            ) : canReview ? (
+              <div className="flex items-center space-x-2">
+                <ShieldCheck className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-600">Verified Purchase</span>
+              </div>
+            ) : (
+              <p className="text-sm text-amber-600">You can only review products you have purchased</p>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -69,13 +127,14 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ product, onReviewAdded 
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
-                    onClick={() => setRating(star)}
-                    className="focus:outline-none"
+                    onClick={() => canReview && setRating(star)}
+                    disabled={!canReview}
+                    className="focus:outline-none disabled:cursor-not-allowed"
                   >
                     <Star
                       className={`h-6 w-6 ${
                         star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                      }`}
+                      } ${!canReview ? 'opacity-50' : ''}`}
                     />
                   </button>
                 ))}
@@ -88,11 +147,12 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ product, onReviewAdded 
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Share your thoughts about this product..."
                 rows={4}
+                disabled={!canReview}
               />
             </div>
             <Button 
               onClick={handleSubmitReview}
-              disabled={isSubmitting || rating === 0}
+              disabled={isSubmitting || rating === 0 || !canReview}
               className="bg-brand-gold hover:bg-brand-gold-dark text-brand-chocolate"
             >
               {isSubmitting ? 'Submitting...' : 'Submit Review'}
@@ -114,6 +174,12 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ product, onReviewAdded 
                   <div className="flex items-center space-x-2 mb-2">
                     <User className="h-5 w-5 text-gray-400" />
                     <span className="font-medium">{review.userName}</span>
+                    {review.verified && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        <ShieldCheck className="h-3 w-3 mr-1" />
+                        Verified Purchase
+                      </Badge>
+                    )}
                     <div className="flex">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star

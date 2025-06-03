@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +17,8 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { addProduct } from '@/services/adminProductService';
+import { ProductVariation } from '@/types';
+import { Plus, Trash2, Upload } from 'lucide-react';
 
 interface AddProductDialogProps {
   open: boolean;
@@ -36,15 +40,48 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     inventory: '',
     featured: false
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [videoFiles, setVideoFiles] = useState<File[]>([]);
+  const [variations, setVariations] = useState<Omit<ProductVariation, 'id'>[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const addVariation = () => {
+    setVariations([...variations, { name: '', value: '', price: 0, inventory: 0 }]);
+  };
+
+  const removeVariation = (index: number) => {
+    setVariations(variations.filter((_, i) => i !== index));
+  };
+
+  const updateVariation = (index: number, field: string, value: string | number) => {
+    const updatedVariations = [...variations];
+    updatedVariations[index] = { ...updatedVariations[index], [field]: value };
+    setVariations(updatedVariations);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setImageFiles(Array.from(e.target.files));
+    }
+  };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setVideoFiles(Array.from(e.target.files));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      const variationsWithIds = variations.map((variation, index) => ({
+        ...variation,
+        id: `var_${Date.now()}_${index}`
+      }));
+
       await addProduct({
         name: formData.name,
         description: formData.description,
@@ -54,10 +91,12 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         inventory: parseInt(formData.inventory),
         featured: formData.featured,
         images: [],
+        videos: [],
+        variations: variationsWithIds,
         subcategory: '',
         averageRating: 0,
         reviews: []
-      }, imageFile || undefined);
+      }, imageFiles, videoFiles);
 
       toast({
         title: "Success",
@@ -74,7 +113,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         inventory: '',
         featured: false
       });
-      setImageFile(null);
+      setImageFiles([]);
+      setVideoFiles([]);
+      setVariations([]);
       onProductAdded();
       onOpenChange(false);
     } catch (error) {
@@ -90,95 +131,191 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Product</DialogTitle>
           <DialogDescription>
-            Fill in the product details below.
+            Fill in the product details below including variations and media.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="col-span-3"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="col-span-3"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="price" className="text-right">
-                Price
-              </Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                className="col-span-3"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="category" className="text-right">
-                Category
-              </Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Electronics">Electronics</SelectItem>
-                  <SelectItem value="Clothing">Clothing</SelectItem>
-                  <SelectItem value="Books">Books</SelectItem>
-                  <SelectItem value="Home">Home</SelectItem>
-                  <SelectItem value="Sports">Sports</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="inventory" className="text-right">
-                Inventory
-              </Label>
-              <Input
-                id="inventory"
-                type="number"
-                value={formData.inventory}
-                onChange={(e) => setFormData(prev => ({ ...prev, inventory: e.target.value }))}
-                className="col-span-3"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="image" className="text-right">
-                Image
-              </Label>
-              <Input
-                id="image"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                className="col-span-3"
-              />
-            </div>
+          <div className="grid gap-6 py-4">
+            {/* Basic Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Basic Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Product Name</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={4}
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="price">Price ($)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      value={formData.price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="salePrice">Sale Price ($)</Label>
+                    <Input
+                      id="salePrice"
+                      type="number"
+                      step="0.01"
+                      value={formData.salePrice}
+                      onChange={(e) => setFormData(prev => ({ ...prev, salePrice: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Electronics">Electronics</SelectItem>
+                        <SelectItem value="Clothing">Clothing</SelectItem>
+                        <SelectItem value="Books">Books</SelectItem>
+                        <SelectItem value="Home">Home</SelectItem>
+                        <SelectItem value="Sports">Sports</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="inventory">Inventory</Label>
+                    <Input
+                      id="inventory"
+                      type="number"
+                      value={formData.inventory}
+                      onChange={(e) => setFormData(prev => ({ ...prev, inventory: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="featured"
+                    checked={formData.featured}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, featured: checked }))}
+                  />
+                  <Label htmlFor="featured">Featured Product</Label>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Media Upload */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Media</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="images">Product Images</Label>
+                  <Input
+                    id="images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageChange}
+                  />
+                  <p className="text-sm text-gray-500 mt-1">Select multiple images (first image will be the main image)</p>
+                </div>
+                <div>
+                  <Label htmlFor="videos">Product Videos</Label>
+                  <Input
+                    id="videos"
+                    type="file"
+                    accept="video/*"
+                    multiple
+                    onChange={handleVideoChange}
+                  />
+                  <p className="text-sm text-gray-500 mt-1">Upload product demonstration videos</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Product Variations */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center justify-between">
+                  Product Variations
+                  <Button type="button" variant="outline" size="sm" onClick={addVariation}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Variation
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {variations.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No variations added yet</p>
+                ) : (
+                  <div className="space-y-4">
+                    {variations.map((variation, index) => (
+                      <div key={index} className="grid grid-cols-4 gap-4 p-4 border rounded-lg">
+                        <div>
+                          <Label>Variation Name</Label>
+                          <Input
+                            value={variation.name}
+                            onChange={(e) => updateVariation(index, 'name', e.target.value)}
+                            placeholder="e.g., Size, Color"
+                          />
+                        </div>
+                        <div>
+                          <Label>Value</Label>
+                          <Input
+                            value={variation.value}
+                            onChange={(e) => updateVariation(index, 'value', e.target.value)}
+                            placeholder="e.g., Large, Red"
+                          />
+                        </div>
+                        <div>
+                          <Label>Price Modifier ($)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={variation.price}
+                            onChange={(e) => updateVariation(index, 'price', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeVariation(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading}>
