@@ -1,22 +1,28 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Product } from '@/types';
 
 interface CartItem {
   productId: string;
   quantity: number;
+  product: Product;
+  price: number;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
+  items: CartItem[]; // Alias for cartItems
   addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
+  subtotal: number; // Computed property
   getCartItemsCount: () => number;
+  itemCount: number; // Computed property
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+export const CartContext = createContext<CartContextType | undefined>(undefined);
 
 interface CartProviderProps {
   children: React.ReactNode;
@@ -44,7 +50,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         newItems[existingItemIndex].quantity += quantity;
         return newItems;
       } else {
-        return [...prevItems, { productId: product.id, quantity }];
+        return [...prevItems, { 
+          productId: product.id, 
+          quantity,
+          product,
+          price: product.price
+        }];
       }
     });
   };
@@ -54,6 +65,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    
     setCartItems(prevItems => {
       return prevItems.map(item => {
         if (item.productId === productId) {
@@ -71,7 +87,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const getCartTotal = () => {
     return cartItems.reduce((total, item) => {
-      return total + (item.quantity * (JSON.parse(localStorage.getItem('products') || '[]').find((p:Product) => p.id === item.productId)?.price || 0));
+      return total + (item.quantity * item.price);
     }, 0);
   };
 
@@ -79,14 +95,21 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
   };
 
+  // Computed properties
+  const subtotal = getCartTotal();
+  const itemCount = getCartItemsCount();
+
   const value: CartContextType = {
     cartItems,
+    items: cartItems, // Alias for compatibility
     addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
     getCartTotal,
-    getCartItemsCount
+    subtotal,
+    getCartItemsCount,
+    itemCount
   };
 
   return (

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { getProducts } from '@/services/adminProductService';
 import { Product } from '@/types';
@@ -11,6 +10,12 @@ const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Filter states
+  const [sortBy, setSortBy] = useState('featured');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [showOnlyInStock, setShowOnlyInStock] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -21,7 +26,6 @@ const Products = () => {
         setFilteredProducts(productsList);
       } catch (error) {
         console.error('Error fetching products:', error);
-        // Fallback to empty array
         setProducts([]);
         setFilteredProducts([]);
       } finally {
@@ -32,30 +36,57 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  const handleFilterChange = (filters: any) => {
+  useEffect(() => {
     let filtered = [...products];
 
     // Apply category filter
-    if (filters.category) {
-      filtered = filtered.filter(product => product.category === filters.category);
-    }
-
-    // Apply price range filter
-    if (filters.priceRange) {
-      const [min, max] = filters.priceRange;
-      filtered = filtered.filter(product => product.price >= min && product.price <= max);
-    }
-
-    // Apply search filter
-    if (filters.search) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        product.description.toLowerCase().includes(filters.search.toLowerCase())
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter(product => 
+        selectedCategories.includes(product.category)
       );
     }
 
+    // Apply price range filter
+    filtered = filtered.filter(product => 
+      product.price >= priceRange[0] && product.price <= priceRange[1]
+    );
+
+    // Apply stock filter
+    if (showOnlyInStock) {
+      filtered = filtered.filter(product => product.inventory > 0);
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'price-low':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'newest':
+        filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        break;
+      default:
+        // Keep original order for 'featured'
+        break;
+    }
+
     setFilteredProducts(filtered);
+  }, [products, sortBy, selectedCategories, priceRange, showOnlyInStock]);
+
+  const handleClearFilters = () => {
+    setSortBy('featured');
+    setSelectedCategories([]);
+    setPriceRange([0, 1000]);
+    setShowOnlyInStock(false);
   };
+
+  const hasActiveFilters = sortBy !== 'featured' || 
+    selectedCategories.length > 0 || 
+    priceRange[0] !== 0 || 
+    priceRange[1] !== 1000 || 
+    showOnlyInStock;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -66,8 +97,16 @@ const Products = () => {
           {/* Filters Sidebar */}
           <div className="lg:w-1/4">
             <ProductFilters 
-              products={products}
-              onFilterChange={handleFilterChange}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              selectedCategories={selectedCategories}
+              setSelectedCategories={setSelectedCategories}
+              priceRange={priceRange}
+              setPriceRange={setPriceRange}
+              showOnlyInStock={showOnlyInStock}
+              setShowOnlyInStock={setShowOnlyInStock}
+              onClearFilters={handleClearFilters}
+              hasActiveFilters={hasActiveFilters}
             />
           </div>
           

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CartContext } from '@/contexts/CartContext';
+import { useCart } from '@/contexts/CartContext';
 import { useToast } from "@/hooks/use-toast";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,9 +12,9 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cartItems, clearCart, getCartTotal } = useContext(CartContext);
+  const { cartItems, clearCart, getCartTotal } = useCart();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
 
   const [shippingForm, setShippingForm] = useState({
     address: '',
@@ -36,7 +37,7 @@ const Checkout = () => {
   }, [cartItems, navigate]);
 
   const handlePlaceOrder = async () => {
-    if (!user) {
+    if (!currentUser) {
       toast({
         title: "Authentication Required",
         description: "Please log in to place an order",
@@ -58,7 +59,7 @@ const Checkout = () => {
     
     try {
       const orderData = {
-        userId: user.uid,
+        userId: currentUser.uid,
         items: cartItems,
         subtotal: subtotal,
         tax: tax,
