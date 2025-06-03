@@ -27,11 +27,16 @@ const Index = () => {
         
         setFeaturedProducts(products.filter(p => p.featured).slice(0, 4));
         setNewArrivals(products.slice(0, 8));
-        setCategories(categoriesData.slice(0, 4));
+        // Filter and ensure categories are strings
+        const validCategories = categoriesData
+          .filter(category => typeof category === 'string' && category.length > 0)
+          .slice(0, 4);
+        setCategories(validCategories);
       } catch (error) {
         console.error('Error fetching products:', error);
         setFeaturedProducts([]);
         setNewArrivals([]);
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }
@@ -115,7 +120,7 @@ const Index = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-brand-chocolate via-transparent to-transparent opacity-80 flex items-end justify-center p-4 transition-opacity duration-300 group-hover:opacity-90">
                       <h3 className="text-white text-xl md:text-2xl font-bold text-center">
-                        {category.charAt(0).toUpperCase() + category.slice(1)}
+                        {String(category).charAt(0).toUpperCase() + String(category).slice(1)}
                       </h3>
                     </div>
                   </div>
